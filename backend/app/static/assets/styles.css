@@ -96,7 +96,14 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .logo {
@@ -121,6 +128,37 @@ footer {
 }
 
 .topbar a:hover {
+  color: var(--teal-deep);
+}
+
+.lang-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(16, 35, 58, 0.1);
+}
+
+.lang-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-btn.is-active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.lang-btn:hover:not(.is-active) {
   color: var(--teal-deep);
 }
 
@@ -651,6 +689,14 @@ footer {
 }
 
 @media (max-width: 900px) {
+  .topbar-right {
+    gap: 0.75rem;
+  }
+
+  .topbar nav {
+    display: none;
+  }
+
   .hero {
     grid-template-columns: 1fr;
     min-height: auto;
