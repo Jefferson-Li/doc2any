@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Doc2Any — 不跑版文件轉換</title>
+    <meta
+      name="description"
+      content="上傳任意格式，轉成你要的格式。PDF 轉 Word 盡量保留版面、表格與圖片。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true">
+      <div class="grain"></div>
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+    </div>
+
+    <header class="topbar">
+      <a class="logo" href="/">Doc2Any</a>
+      <nav>
+        <a href="#how">怎麼用</a>
+        <a href="#formats">支援格式</a>
+        <a href="/docs" target="_blank" rel="noreferrer">API</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="brand-mark">Doc2Any</p>
+          <h1>上傳任意格式，轉成你要的格式，盡量不跑版。</h1>
+          <p class="lede">
+            PDF → Word 會重建段落、表格與圖片位置；Office / 圖片格式也可一鍵轉換。
+          </p>
+
+          <div class="converter" id="converter">
+            <div
+              class="dropzone"
+              id="dropzone"
+              tabindex="0"
+              role="button"
+              aria-label="上傳檔案"
+            >
+              <input type="file" id="fileInput" hidden />
+              <div class="dropzone-inner" id="dropIdle">
+                <span class="drop-icon" aria-hidden="true"></span>
+                <strong>拖曳檔案到這裡</strong>
+                <span>或點擊選擇 · 最大 50MB</span>
+              </div>
+              <div class="file-chip hidden" id="fileChip">
+                <span class="file-ext" id="fileExt">PDF</span>
+                <div>
+                  <strong id="fileName">document.pdf</strong>
+                  <small id="fileSize">1.2 MB</small>
+                </div>
+                <button type="button" class="ghost" id="clearFile" aria-label="清除檔案">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div class="controls">
+              <label class="field">
+                <span>轉成</span>
+                <select id="targetFormat" disabled>
+                  <option value="">先上傳檔案</option>
+                </select>
+              </label>
+              <button type="button" class="cta" id="convertBtn" disabled>
+                開始轉換
+              </button>
+            </div>
+
+            <div class="status hidden" id="status" role="status" aria-live="polite">
+              <div class="progress"><i id="progressBar"></i></div>
+              <p id="statusText">正在分析版面…</p>
+            </div>
+
+            <div class="result hidden" id="result">
+              <div>
+                <strong id="resultName">ready.docx</strong>
+                <p>轉換完成，版面已盡量保留。</p>
+              </div>
+              <a class="cta secondary" id="downloadBtn" href="#">下載檔案</a>
+            </div>
+
+            <p class="error hidden" id="error"></p>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="stage">
+            <article class="sheet sheet-from">
+              <header></header>
+              <div class="lines">
+                <i></i><i></i><i></i><i class="short"></i>
+              </div>
+              <div class="table-mock">
+                <b></b><b></b><b></b><b></b>
+              </div>
+              <span class="badge">PDF</span>
+            </article>
+            <div class="flow">
+              <span></span><span></span><span></span>
+            </div>
+            <article class="sheet sheet-to">
+              <header></header>
+              <div class="lines">
+                <i></i><i></i><i></i><i class="short"></i>
+              </div>
+              <div class="table-mock">
+                <b></b><b></b><b></b><b></b>
+              </div>
+              <span class="badge">DOCX</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="how">
+        <h2>怎麼做到比較不跑版</h2>
+        <p class="section-lede">針對不同來源，選用最適合的轉換引擎。</p>
+        <ul class="steps">
+          <li>
+            <strong>PDF → Word</strong>
+            <span>用版面重建引擎還原段落、無框線表格與嵌入圖片。</span>
+          </li>
+          <li>
+            <strong>Office 互轉</strong>
+            <span>偵測到 LibreOffice 時，以官方匯出濾鏡保真轉換。</span>
+          </li>
+          <li>
+            <strong>圖片格式</strong>
+            <span>本機 Pillow 處理，PNG / JPG / WebP / PDF 快速互轉。</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="panel formats" id="formats">
+        <h2>支援路徑</h2>
+        <p class="section-lede" id="engineNote">正在讀取引擎狀態…</p>
+        <div class="format-grid" id="formatGrid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Doc2Any · 本機轉換，檔案不會送到第三方雲端</p>
+    </footer>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

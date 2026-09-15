@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+backend/uploads/
+backend/outputs/
+*.egg-info/
+.DS_Store
+.env
+node_modules/
+.pytest_cache/
+*.docx
+*.pdf
+!backend/app/static/**
