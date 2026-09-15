@@ -38,7 +38,7 @@
           <p class="brand-mark">Doc2Any</p>
           <h1>上傳任意格式，轉成你要的格式，盡量不跑版。</h1>
           <p class="lede">
-            PDF → Word 會重建段落、表格與圖片位置；Office / 圖片格式也可一鍵轉換。
+            Canva／多欄履歷預設用「視覺保版」整頁對齊；簡單文件可改可編輯文字模式。
           </p>
 
           <div class="converter" id="converter">
@@ -67,11 +67,21 @@
               </div>
             </div>
 
+            <p class="layout-hint hidden" id="layoutHint"></p>
+
             <div class="controls">
               <label class="field">
                 <span>轉成</span>
                 <select id="targetFormat" disabled>
                   <option value="">先上傳檔案</option>
+                </select>
+              </label>
+              <label class="field" id="layoutField">
+                <span>版面模式</span>
+                <select id="layoutMode">
+                  <option value="auto">自動（建議）</option>
+                  <option value="visual">視覺保版（不跑版）</option>
+                  <option value="editable">可編輯文字</option>
                 </select>
               </label>
               <button type="button" class="cta" id="convertBtn" disabled>
@@ -130,16 +140,16 @@
         <p class="section-lede">針對不同來源，選用最適合的轉換引擎。</p>
         <ul class="steps">
           <li>
-            <strong>PDF → Word</strong>
-            <span>用版面重建引擎還原段落、無框線表格與嵌入圖片。</span>
+            <strong>不是 OCR 問題時</strong>
+            <span>有文字層的 Canva／多欄 PDF，用文字重建會把欄位打散；應改視覺保版。</span>
           </li>
           <li>
-            <strong>Office 互轉</strong>
-            <span>偵測到 LibreOffice 時，以官方匯出濾鏡保真轉換。</span>
+            <strong>視覺保版（預設）</strong>
+            <span>逐頁高清渲染進 Word，版面與原 PDF 對齊，適合履歷與設計稿。</span>
           </li>
           <li>
-            <strong>圖片格式</strong>
-            <span>本機 Pillow 處理，PNG / JPG / WebP / PDF 快速互轉。</span>
+            <strong>可編輯文字</strong>
+            <span>單欄論文／報告較適合；掃描件需先 OCR 才有可選文字。</span>
           </li>
         </ul>
       </section>

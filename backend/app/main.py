@@ -10,7 +10,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .converters import SUPPORTED_TARGETS, convert_file, libreoffice_available
+from .converters import (
+    SUPPORTED_TARGETS,
+    analyze_pdf_layout,
+    convert_file,
+    libreoffice_available,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 APP_DIR = Path(__file__).resolve().parent
@@ -83,14 +88,49 @@ def formats() -> FormatsResponse:
     )
 
 
+@app.post("/api/analyze")
+async def analyze(file: UploadFile = File(...)) -> dict:
+    """Inspect PDF layout complexity / OCR need before converting."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="缺少檔案名稱")
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="空檔案")
+
+    job_id = uuid.uuid4().hex
+    work = OUTPUT_DIR / job_id
+    work.mkdir(parents=True, exist_ok=True)
+    src_path = work / Path(file.filename).name
+    src_path.write_bytes(raw)
+    try:
+        if src_path.suffix.lower() != ".pdf":
+            return {
+                "recommended_mode": "editable",
+                "reason": "非 PDF，無需版面模式",
+                "is_scanned": False,
+                "complex_layout": False,
+            }
+        return analyze_pdf_layout(src_path)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 @app.post("/api/convert")
 async def convert(
     file: UploadFile = File(...),
     target_format: str = Form(...),
+    layout_mode: str = Form("auto"),
 ) -> FileResponse:
     target = target_format.lower().lstrip(".")
     if target == "jpeg":
         target = "jpg"
+
+    mode = (layout_mode or "auto").lower().strip()
+    if mode not in {"auto", "visual", "editable"}:
+        raise HTTPException(
+            status_code=400,
+            detail="layout_mode 僅支援 auto / visual / editable",
+        )
 
     if not file.filename:
         raise HTTPException(status_code=400, detail="缺少檔案名稱")
@@ -110,7 +150,7 @@ async def convert(
     src_path.write_bytes(raw)
 
     try:
-        result = convert_file(src_path, target, work)
+        result = convert_file(src_path, target, work, layout_mode=mode)
     except ValueError as exc:
         shutil.rmtree(work, ignore_errors=True)
         raise HTTPException(status_code=400, detail=str(exc)) from exc

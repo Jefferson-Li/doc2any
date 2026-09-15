@@ -4,12 +4,13 @@
 
 ## 功能
 
-- **PDF → DOCX**：以 `pdf2docx` 重建版面（段落 / 表格 / 圖片）
+- **PDF → DOCX（預設視覺保版）**：複雜設計稿（Canva／多欄履歷）逐頁渲染，版面與原檔對齊
+- **PDF → DOCX（可編輯模式）**：單欄文字文件可用文字重建；掃描件需先 OCR
 - **圖片互轉**：PNG / JPG / WebP / PDF
 - **DOCX → HTML / TXT**：本機解析
-- **LibreOffice（可選）**：安裝後可擴充 DOC / PPTX / XLSX / DOCX↔PDF 等保真路徑
+- **LibreOffice（可選）**：安裝後可擴充 DOC / PPTX / XLSX / DOCX↔PDF 等路徑
 
-> 掃描版 PDF 需先 OCR；多欄、公式、複雜浮動排版無法保證像素級一致。
+> 你的履歷若是 Canva 匯出：跑版通常**不是 OCR**，而是多欄絕對定位無法用流動段落還原。請用「視覺保版／自動」。
 
 ## 快速開始
 

@@ -8,6 +8,9 @@
   const fileSize = document.getElementById("fileSize");
   const clearFile = document.getElementById("clearFile");
   const targetFormat = document.getElementById("targetFormat");
+  const layoutMode = document.getElementById("layoutMode");
+  const layoutField = document.getElementById("layoutField");
+  const layoutHint = document.getElementById("layoutHint");
   const convertBtn = document.getElementById("convertBtn");
   const statusEl = document.getElementById("status");
   const statusText = document.getElementById("statusText");
@@ -45,11 +48,46 @@
     errorEl.classList.add("hidden");
   }
 
+  function syncLayoutVisibility() {
+    const isPdfToDocx =
+      selectedFile &&
+      extOf(selectedFile.name) === "pdf" &&
+      (targetFormat.value === "docx" || targetFormat.value === "doc");
+    layoutField.classList.toggle("hidden", !isPdfToDocx);
+    if (!isPdfToDocx) {
+      layoutHint.classList.add("hidden");
+    }
+  }
+
+  async function analyzeSelectedPdf(file) {
+    if (extOf(file.name) !== "pdf") {
+      layoutHint.classList.add("hidden");
+      return;
+    }
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/analyze", { method: "POST", body });
+      if (!res.ok) return;
+      const data = await res.json();
+      const modeLabel =
+        data.recommended_mode === "visual" ? "視覺保版" : "可編輯文字";
+      layoutHint.textContent = `偵測：${data.reason} → 建議「${modeLabel}」`;
+      layoutHint.classList.remove("hidden");
+      if (layoutMode.value === "auto") {
+        // keep auto; hint explains what auto will do
+      }
+    } catch (_) {
+      /* optional hint */
+    }
+  }
+
   function setFile(file) {
     selectedFile = file;
     clearError();
     resultEl.classList.add("hidden");
     statusEl.classList.add("hidden");
+    layoutHint.classList.add("hidden");
     if (downloadUrl) {
       URL.revokeObjectURL(downloadUrl);
       downloadUrl = null;
@@ -61,6 +99,7 @@
       targetFormat.innerHTML = '<option value="">先上傳檔案</option>';
       targetFormat.disabled = true;
       convertBtn.disabled = true;
+      syncLayoutVisibility();
       return;
     }
 
@@ -77,11 +116,12 @@
       .join("");
     targetFormat.disabled = false;
 
-    // Prefer docx when source is pdf
     if (ext === "pdf" && options.includes("docx")) {
       targetFormat.value = "docx";
     }
     convertBtn.disabled = false;
+    syncLayoutVisibility();
+    analyzeSelectedPdf(file);
   }
 
   function openPicker() {
@@ -111,6 +151,8 @@
     setFile(null);
   });
 
+  targetFormat.addEventListener("change", syncLayoutVisibility);
+
   ["dragenter", "dragover"].forEach((evt) => {
     dropzone.addEventListener(evt, (e) => {
       e.preventDefault();
@@ -130,11 +172,17 @@
     if (file) setFile(file);
   });
 
-  const messages = [
-    "正在分析版面…",
+  const messagesVisual = [
+    "正在分析版面複雜度…",
+    "逐頁高清渲染中…",
+    "寫入 Word 頁面尺寸…",
+    "輸出保版檔案…",
+  ];
+  const messagesEditable = [
+    "正在解析文字區塊…",
     "重建段落與表格…",
-    "保留圖片位置…",
-    "輸出目標格式…",
+    "對齊圖片位置…",
+    "輸出可編輯 Word…",
   ];
 
   convertBtn.addEventListener("click", async () => {
@@ -143,6 +191,12 @@
     resultEl.classList.add("hidden");
     statusEl.classList.remove("hidden");
     convertBtn.disabled = true;
+
+    const useVisualMsgs =
+      layoutMode.value === "visual" ||
+      layoutMode.value === "auto" ||
+      targetFormat.value !== "docx";
+    const messages = useVisualMsgs ? messagesVisual : messagesEditable;
 
     let i = 0;
     statusText.textContent = messages[0];
@@ -154,6 +208,7 @@
     const body = new FormData();
     body.append("file", selectedFile);
     body.append("target_format", targetFormat.value);
+    body.append("layout_mode", layoutMode.value || "auto");
 
     try {
       const res = await fetch("/api/convert", { method: "POST", body });
@@ -180,6 +235,13 @@
       downloadBtn.href = downloadUrl;
       downloadBtn.download = outName;
       resultName.textContent = outName;
+      const resultNote = resultEl.querySelector("p");
+      if (resultNote) {
+        resultNote.textContent =
+          layoutMode.value === "editable"
+            ? "已輸出可編輯文字（複雜設計稿可能仍有位移）。"
+            : "已用視覺保版輸出，版面與原 PDF 對齊。";
+      }
       resultEl.classList.remove("hidden");
     } catch (err) {
       showError(err.message || "轉換失敗，請稍後再試");
@@ -196,8 +258,8 @@
       const data = await res.json();
       routes = data.routes || {};
       engineNote.textContent = data.libreoffice
-        ? "LibreOffice 已就緒，Office 互轉可保真匯出。"
-        : "核心引擎已就緒（PDF→DOCX 保版）。安裝 LibreOffice 後可擴充更多 Office 路徑。";
+        ? "LibreOffice 已就緒。PDF→Word 對設計稿預設視覺保版。"
+        : "PDF→Word 已改為視覺保版（Canva／履歷不跑版）。安裝 LibreOffice 可擴充更多 Office 路徑。";
 
       formatGrid.innerHTML = Object.entries(routes)
         .map(
@@ -213,5 +275,6 @@
     }
   }
 
+  syncLayoutVisibility();
   loadFormats();
 })();

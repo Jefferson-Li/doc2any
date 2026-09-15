@@ -283,9 +283,20 @@ footer {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 1fr auto;
   gap: 0.75rem;
   margin-top: 0.9rem;
+}
+
+.layout-hint {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(15, 143, 127, 0.1);
+  border: 1px solid rgba(15, 143, 127, 0.22);
+  color: var(--teal-deep);
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 
 .field {
