@@ -1,14 +1,30 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+*.egg-info/
+.pytest_cache/
+
+# Runtime data
 backend/uploads/
 backend/outputs/
-*.egg-info/
-.DS_Store
+data/
+
+# Secrets / local env
 .env
+.env.local
+.env.staging
+.env.production
+!.env.example
+!.env.staging.example
+!.env.production.example
+
+# OS / IDE
+.DS_Store
 node_modules/
-.pytest_cache/
+
+# Local test artifacts
 *.docx
 *.pdf
 !backend/app/static/**

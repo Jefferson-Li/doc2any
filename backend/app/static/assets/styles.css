@@ -35,12 +35,22 @@ body {
   overflow-x: hidden;
 }
 
-.atmosphere {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+.env-banner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0.45rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(90deg, #0a6b5f, #c4a574);
 }
+
+.env-banner.hidden {
+  display: none;
+}
+
 
 .grain {
   position: absolute;

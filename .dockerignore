@@ -1,0 +1,16 @@
+.git
+.venv
+**/__pycache__
+**/*.pyc
+backend/.venv
+backend/uploads
+backend/outputs
+backend/outputs/**
+*.pdf
+*.docx
+.env
+.env.staging
+.env.production
+.DS_Store
+node_modules
+data

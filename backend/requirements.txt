@@ -9,3 +9,4 @@ mammoth==1.8.0
 img2pdf==0.5.1
 aiofiles==24.1.0
 pydantic==2.10.5
+pydantic-settings==2.7.1

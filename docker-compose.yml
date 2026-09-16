@@ -1,0 +1,29 @@
+# Base compose — override with staging/production files
+services:
+  doc2any:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: doc2any:local
+    container_name: doc2any
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      DOC2ANY_ENV: ${DOC2ANY_ENV:-development}
+      DOC2ANY_DATA_DIR: /data
+      DOC2ANY_MAX_UPLOAD_MB: ${DOC2ANY_MAX_UPLOAD_MB:-50}
+      DOC2ANY_RATE_LIMIT_ENABLED: ${DOC2ANY_RATE_LIMIT_ENABLED:-true}
+      DOC2ANY_RATE_LIMIT_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_PER_MINUTE:-30}
+      DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE:-60}
+      DOC2ANY_FILE_TTL_SECONDS: ${DOC2ANY_FILE_TTL_SECONDS:-3600}
+      DOC2ANY_CLEANUP_INTERVAL_SECONDS: ${DOC2ANY_CLEANUP_INTERVAL_SECONDS:-300}
+      DOC2ANY_CLEANUP_ENABLED: ${DOC2ANY_CLEANUP_ENABLED:-true}
+      DOC2ANY_CORS_ORIGINS: ${DOC2ANY_CORS_ORIGINS:-*}
+      DOC2ANY_PUBLIC_LABEL: ${DOC2ANY_PUBLIC_LABEL:-}
+      DOC2ANY_DEBUG: ${DOC2ANY_DEBUG:-false}
+    volumes:
+      - doc2any_data:/data
+    restart: unless-stopped
+
+volumes:
+  doc2any_data:

@@ -1,0 +1,26 @@
+# Staging / test environment
+# Usage:
+#   cp .env.staging.example .env.staging
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d --build
+
+services:
+  doc2any:
+    image: doc2any:staging
+    container_name: doc2any-staging
+    ports:
+      - "${HOST_PORT:-8001}:8000"
+    environment:
+      DOC2ANY_ENV: staging
+      DOC2ANY_PUBLIC_LABEL: Staging
+      DOC2ANY_DEBUG: "true"
+      DOC2ANY_MAX_UPLOAD_MB: ${DOC2ANY_MAX_UPLOAD_MB:-30}
+      DOC2ANY_RATE_LIMIT_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_PER_MINUTE:-40}
+      DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE:-80}
+      DOC2ANY_FILE_TTL_SECONDS: ${DOC2ANY_FILE_TTL_SECONDS:-1800}
+      DOC2ANY_CLEANUP_INTERVAL_SECONDS: ${DOC2ANY_CLEANUP_INTERVAL_SECONDS:-180}
+      DOC2ANY_CORS_ORIGINS: ${DOC2ANY_CORS_ORIGINS:-*}
+    volumes:
+      - doc2any_staging_data:/data
+
+volumes:
+  doc2any_staging_data:

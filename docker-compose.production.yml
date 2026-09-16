@@ -1,0 +1,34 @@
+# Production environment
+# Usage:
+#   cp .env.production.example .env.production
+#   docker compose -f docker-compose.yml -f docker-compose.production.yml --env-file .env.production up -d --build
+
+services:
+  doc2any:
+    image: doc2any:production
+    container_name: doc2any-production
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      DOC2ANY_ENV: production
+      DOC2ANY_PUBLIC_LABEL: ""
+      DOC2ANY_DEBUG: "false"
+      DOC2ANY_MAX_UPLOAD_MB: ${DOC2ANY_MAX_UPLOAD_MB:-50}
+      DOC2ANY_RATE_LIMIT_ENABLED: "true"
+      DOC2ANY_RATE_LIMIT_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_PER_MINUTE:-15}
+      DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE: ${DOC2ANY_RATE_LIMIT_ANALYZE_PER_MINUTE:-30}
+      DOC2ANY_FILE_TTL_SECONDS: ${DOC2ANY_FILE_TTL_SECONDS:-1800}
+      DOC2ANY_CLEANUP_INTERVAL_SECONDS: ${DOC2ANY_CLEANUP_INTERVAL_SECONDS:-120}
+      # Set to your real domain(s), comma-separated
+      DOC2ANY_CORS_ORIGINS: ${DOC2ANY_CORS_ORIGINS:-https://example.com}
+    volumes:
+      - doc2any_production_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+volumes:
+  doc2any_production_data:

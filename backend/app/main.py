@@ -1,41 +1,91 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 import shutil
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .cleanup import cleanup_loop
+from .config import Settings, get_settings
 from .converters import (
     SUPPORTED_TARGETS,
     analyze_pdf_layout,
     convert_file,
     libreoffice_available,
 )
+from .rate_limit import limiter
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+logger = logging.getLogger("doc2any")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
-UPLOAD_DIR = BASE_DIR / "uploads"
-OUTPUT_DIR = BASE_DIR / "outputs"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+_cleanup_stop: asyncio.Event | None = None
+_cleanup_task: asyncio.Task | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _cleanup_stop, _cleanup_task
+    settings = get_settings()
+    settings.ensure_dirs()
+    logger.info(
+        "Doc2Any starting env=%s data_dir=%s output_dir=%s ttl=%ss rate=%s/min",
+        settings.env,
+        settings.data_dir,
+        settings.resolved_output_dir,
+        settings.file_ttl_seconds,
+        settings.rate_limit_per_minute,
+    )
+
+    if settings.cleanup_enabled:
+        _cleanup_stop = asyncio.Event()
+        _cleanup_task = asyncio.create_task(
+            cleanup_loop(
+                settings.resolved_output_dir,
+                ttl_seconds=settings.file_ttl_seconds,
+                interval_seconds=settings.cleanup_interval_seconds,
+                stop_event=_cleanup_stop,
+            )
+        )
+
+    yield
+
+    if _cleanup_stop is not None:
+        _cleanup_stop.set()
+    if _cleanup_task is not None:
+        try:
+            await asyncio.wait_for(_cleanup_task, timeout=5)
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            _cleanup_task.cancel()
+
+
+settings = get_settings()
 
 app = FastAPI(
-    title="Doc2Any",
+    title=settings.app_name,
     description="Layout-aware document conversion API",
-    version="1.0.0",
+    version=settings.app_version,
+    lifespan=lifespan,
+    docs_url=None if settings.is_production and not settings.debug else "/docs",
+    redoc_url=None if settings.is_production and not settings.debug else "/redoc",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,14 +94,20 @@ app.add_middleware(
 
 class HealthResponse(BaseModel):
     status: str
+    environment: str
+    label: str
     libreoffice: bool
     targets: list[str]
+    max_upload_mb: int
+    file_ttl_seconds: int
+    rate_limit_per_minute: int
 
 
 class FormatsResponse(BaseModel):
     targets: list[str]
     libreoffice: bool
     routes: dict[str, list[str]]
+    environment: str
 
 
 ROUTES: dict[str, list[str]] = {
@@ -70,35 +126,79 @@ ROUTES: dict[str, list[str]] = {
 }
 
 
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
+def _enforce_rate_limit(request: Request, *, kind: str) -> Settings:
+    cfg = get_settings()
+    if not cfg.rate_limit_enabled:
+        return cfg
+    ip = _client_ip(request)
+    limit = (
+        cfg.rate_limit_analyze_per_minute
+        if kind == "analyze"
+        else cfg.rate_limit_per_minute
+    )
+    key = f"{kind}:{ip}"
+    if not limiter.allow(key, limit=limit, window_seconds=60.0):
+        raise HTTPException(
+            status_code=429,
+            detail="請求過於頻繁，請稍後再試 / Too many requests, please retry later",
+            headers={"Retry-After": "60"},
+        )
+    return cfg
+
+
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
+    cfg = get_settings()
     return HealthResponse(
         status="ok",
+        environment=cfg.env,
+        label=cfg.display_label,
         libreoffice=libreoffice_available(),
         targets=sorted(SUPPORTED_TARGETS),
+        max_upload_mb=cfg.max_upload_mb,
+        file_ttl_seconds=cfg.file_ttl_seconds,
+        rate_limit_per_minute=cfg.rate_limit_per_minute,
     )
 
 
 @app.get("/api/formats", response_model=FormatsResponse)
 def formats() -> FormatsResponse:
+    cfg = get_settings()
     return FormatsResponse(
         targets=sorted(SUPPORTED_TARGETS),
         libreoffice=libreoffice_available(),
         routes=ROUTES,
+        environment=cfg.env,
     )
 
 
 @app.post("/api/analyze")
-async def analyze(file: UploadFile = File(...)) -> dict:
+async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
     """Inspect PDF layout complexity / OCR need before converting."""
+    cfg = _enforce_rate_limit(request, kind="analyze")
+
     if not file.filename:
         raise HTTPException(status_code=400, detail="缺少檔案名稱")
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="空檔案")
+    if len(raw) > cfg.max_upload_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"檔案超過 {cfg.max_upload_mb}MB 限制",
+        )
 
     job_id = uuid.uuid4().hex
-    work = OUTPUT_DIR / job_id
+    work = cfg.resolved_output_dir / job_id
     work.mkdir(parents=True, exist_ok=True)
     src_path = work / Path(file.filename).name
     src_path.write_bytes(raw)
@@ -117,10 +217,13 @@ async def analyze(file: UploadFile = File(...)) -> dict:
 
 @app.post("/api/convert")
 async def convert(
+    request: Request,
     file: UploadFile = File(...),
     target_format: str = Form(...),
     layout_mode: str = Form("auto"),
 ) -> FileResponse:
+    cfg = _enforce_rate_limit(request, kind="convert")
+
     target = target_format.lower().lstrip(".")
     if target == "jpeg":
         target = "jpg"
@@ -138,11 +241,14 @@ async def convert(
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="空檔案")
-    if len(raw) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="檔案超過 50MB 限制")
+    if len(raw) > cfg.max_upload_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"檔案超過 {cfg.max_upload_mb}MB 限制",
+        )
 
     job_id = uuid.uuid4().hex
-    work = OUTPUT_DIR / job_id
+    work = cfg.resolved_output_dir / job_id
     work.mkdir(parents=True, exist_ok=True)
 
     src_name = Path(file.filename).name

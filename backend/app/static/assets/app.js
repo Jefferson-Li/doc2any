@@ -50,6 +50,7 @@
       "formats.coreReady":
         "PDF→Word 已改為視覺保版（Canva／履歷不跑版）。安裝 LibreOffice 可擴充更多 Office 路徑。",
       "formats.unavailable": "無法讀取引擎狀態，仍可嘗試上傳轉換。",
+      "env.banner": "目前環境：{label}",
       "hint.mode.visual": "視覺保版",
       "hint.mode.editable": "可編輯文字",
       "hint.scanned": "掃描影像 PDF（無文字層，需 OCR 才能可編輯）",
@@ -113,6 +114,7 @@
         "PDF→Word uses visual fidelity (layout-safe for Canva/resumes). Install LibreOffice for more Office routes.",
       "formats.unavailable":
         "Could not load engine status. You can still try converting.",
+      "env.banner": "Environment: {label}",
       "hint.mode.visual": "Visual",
       "hint.mode.editable": "Editable text",
       "hint.scanned": "Scanned image PDF (no text layer—OCR needed for editable text)",
@@ -146,12 +148,14 @@
   const errorEl = document.getElementById("error");
   const formatGrid = document.getElementById("formatGrid");
   const engineNote = document.getElementById("engineNote");
+  const envBanner = document.getElementById("envBanner");
   const langButtons = document.querySelectorAll(".lang-btn");
 
   let selectedFile = null;
   let routes = {};
   let downloadUrl = null;
   let formatsData = null;
+  let healthData = null;
   let lastAnalyze = null;
   let lang =
     localStorage.getItem("doc2any_lang") ||
@@ -202,6 +206,19 @@
     }
     renderEngineNote();
     renderAnalyzeHint();
+    renderEnvBanner();
+  }
+
+  function renderEnvBanner() {
+    if (!envBanner) return;
+    const label = healthData?.label;
+    if (!label || healthData?.environment === "production") {
+      envBanner.classList.add("hidden");
+      envBanner.textContent = "";
+      return;
+    }
+    envBanner.textContent = t("env.banner").replace("{label}", label);
+    envBanner.classList.remove("hidden");
   }
 
   function formatBytes(bytes) {
@@ -465,10 +482,17 @@
 
   async function loadFormats() {
     try {
-      const res = await fetch("/api/formats");
-      formatsData = await res.json();
+      const [formatsRes, healthRes] = await Promise.all([
+        fetch("/api/formats"),
+        fetch("/api/health"),
+      ]);
+      formatsData = await formatsRes.json();
+      if (healthRes.ok) {
+        healthData = await healthRes.json();
+      }
       routes = formatsData.routes || {};
       renderEngineNote();
+      renderEnvBanner();
 
       formatGrid.innerHTML = Object.entries(routes)
         .map(
