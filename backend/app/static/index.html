@@ -93,8 +93,9 @@
               <label class="field" id="layoutField">
                 <span data-i18n="controls.layout">版面模式</span>
                 <select id="layoutMode">
-                  <option value="auto" data-i18n="layout.auto">自動（建議）</option>
-                  <option value="visual" data-i18n="layout.visual">視覺保版（不跑版）</option>
+                  <option value="auto" data-i18n="layout.auto">自動混合（建議）</option>
+                  <option value="hybrid" data-i18n="layout.hybrid">混合轉換</option>
+                  <option value="visual" data-i18n="layout.visual">視覺保版</option>
                   <option value="editable" data-i18n="layout.editable">可編輯文字</option>
                 </select>
               </label>
@@ -114,6 +115,35 @@
                 <p id="resultNote" data-i18n="result.default">轉換完成，版面已盡量保留。</p>
               </div>
               <a class="cta secondary" id="downloadBtn" href="#" data-i18n="result.download">下載檔案</a>
+            </div>
+
+            <div class="quality-card hidden" id="qualityCard" aria-live="polite">
+              <div class="quality-head">
+                <strong data-i18n="quality.title">轉換品質</strong>
+                <span class="quality-grade" id="qualityGrade">A</span>
+              </div>
+              <p class="quality-score">
+                <span data-i18n="quality.overall">總分</span>
+                <em id="qualityOverall">0</em>
+              </p>
+              <ul class="quality-bars">
+                <li>
+                  <span data-i18n="quality.layout">版面保真</span>
+                  <div class="bar"><i id="barLayout"></i></div>
+                  <b id="scoreLayout">0</b>
+                </li>
+                <li>
+                  <span data-i18n="quality.text">文字完整</span>
+                  <div class="bar"><i id="barText"></i></div>
+                  <b id="scoreText">0</b>
+                </li>
+                <li>
+                  <span data-i18n="quality.edit">可編輯性</span>
+                  <div class="bar"><i id="barEdit"></i></div>
+                  <b id="scoreEdit">0</b>
+                </li>
+              </ul>
+              <p class="quality-meta" id="qualityMeta"></p>
             </div>
 
             <p class="error hidden" id="error"></p>
@@ -150,25 +180,27 @@
       </section>
 
       <section class="panel" id="how">
-        <h2 data-i18n="how.title">怎麼做到比較不跑版</h2>
-        <p class="section-lede" data-i18n="how.lede">針對不同來源，選用最適合的轉換引擎。</p>
+        <h2 data-i18n="how.title">轉換管線：偵測 → 混合 → 評分</h2>
+        <p class="section-lede" data-i18n="how.lede">
+          每個 PDF→Word 都會走完整三步驟，自動選出較佳結果。
+        </p>
         <ul class="steps">
           <li>
-            <strong data-i18n="how.s1.title">不是 OCR 問題時</strong>
+            <strong data-i18n="how.s1.title">1. Layout Detection</strong>
             <span data-i18n="how.s1.body"
-              >有文字層的 Canva／多欄 PDF，用文字重建會把欄位打散；應改視覺保版。</span
+              >判斷掃描／設計稿／多欄／簡單文字，並給出建議模式與信心分數。</span
             >
           </li>
           <li>
-            <strong data-i18n="how.s2.title">視覺保版（預設）</strong>
+            <strong data-i18n="how.s2.title">2. Hybrid Conversion</strong>
             <span data-i18n="how.s2.body"
-              >逐頁高清渲染進 Word，版面與原 PDF 對齊，適合履歷與設計稿。</span
+              >同時評估視覺保版與可編輯重建，依版面類型挑選勝者。</span
             >
           </li>
           <li>
-            <strong data-i18n="how.s3.title">可編輯文字</strong>
+            <strong data-i18n="how.s3.title">3. Quality Score</strong>
             <span data-i18n="how.s3.body"
-              >單欄論文／報告較適合；掃描件需先 OCR 才有可選文字。</span
+              >輸出版面保真、文字完整、可編輯性與總分，方便你判斷結果。</span
             >
           </li>
         </ul>

@@ -19,6 +19,7 @@ from .converters import (
     SUPPORTED_TARGETS,
     analyze_pdf_layout,
     convert_file,
+    convert_pdf_to_docx_pipeline,
     libreoffice_available,
 )
 from .rate_limit import limiter
@@ -229,10 +230,10 @@ async def convert(
         target = "jpg"
 
     mode = (layout_mode or "auto").lower().strip()
-    if mode not in {"auto", "visual", "editable"}:
+    if mode not in {"auto", "hybrid", "visual", "editable"}:
         raise HTTPException(
             status_code=400,
-            detail="layout_mode 僅支援 auto / visual / editable",
+            detail="layout_mode 僅支援 auto / hybrid / visual / editable",
         )
 
     if not file.filename:
@@ -255,8 +256,18 @@ async def convert(
     src_path = work / src_name
     src_path.write_bytes(raw)
 
+    report_meta: dict | None = None
     try:
-        result = convert_file(src_path, target, work, layout_mode=mode)
+        src_ext = src_path.suffix.lower().lstrip(".")
+        if src_ext == "pdf" and target == "docx":
+            report = convert_pdf_to_docx_pipeline(
+                src_path, work / f"{Path(src_name).stem}.docx", work, mode=mode
+            )
+            report.write_json(work / "conversion_report.json")
+            result = report.path
+            report_meta = report.to_dict()
+        else:
+            result = convert_file(src_path, target, work, layout_mode=mode)
     except ValueError as exc:
         shutil.rmtree(work, ignore_errors=True)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -283,11 +294,48 @@ async def convert(
     suffix = result.suffix.lstrip(".").lower()
     download_name = f"{Path(src_name).stem}.{suffix}"
 
+    headers: dict[str, str] = {}
+    if report_meta:
+        q = report_meta.get("quality") or {}
+        layout = report_meta.get("layout") or {}
+        headers = {
+            "X-Doc2Any-Pipeline": "layout_detection,hybrid_conversion,quality_score",
+            "X-Doc2Any-Layout-Type": str(layout.get("layout_type", "")),
+            "X-Doc2Any-Mode-Used": str(report_meta.get("mode_used", "")),
+            "X-Doc2Any-Score": str(q.get("overall", "")),
+            "X-Doc2Any-Grade": str(q.get("grade", "")),
+            "X-Doc2Any-Score-Layout": str(q.get("layout_fidelity", "")),
+            "X-Doc2Any-Score-Text": str(q.get("text_completeness", "")),
+            "X-Doc2Any-Score-Edit": str(q.get("editability", "")),
+            "X-Doc2Any-Report": f"/api/jobs/{job_id}/report",
+            "Access-Control-Expose-Headers": (
+                "X-Doc2Any-Pipeline, X-Doc2Any-Layout-Type, X-Doc2Any-Mode-Used, "
+                "X-Doc2Any-Score, X-Doc2Any-Grade, X-Doc2Any-Score-Layout, "
+                "X-Doc2Any-Score-Text, X-Doc2Any-Score-Edit, X-Doc2Any-Report, "
+                "Content-Disposition"
+            ),
+        }
+
     return FileResponse(
         path=result,
         media_type=media_types.get(suffix, "application/octet-stream"),
         filename=download_name,
+        headers=headers,
     )
+
+
+@app.get("/api/jobs/{job_id}/report")
+def job_report(job_id: str) -> dict:
+    """Fetch conversion report JSON written during PDF→DOCX pipeline."""
+    cfg = get_settings()
+    if not job_id.isalnum() or len(job_id) > 64:
+        raise HTTPException(status_code=400, detail="無效的 job id")
+    report_path = cfg.resolved_output_dir / job_id / "conversion_report.json"
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="找不到轉換報告")
+    import json
+
+    return json.loads(report_path.read_text(encoding="utf-8"))
 
 
 @app.get("/")

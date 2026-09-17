@@ -18,6 +18,8 @@ from docx.shared import Emu, Pt
 from pdf2docx import Converter
 from PIL import Image
 
+from .layout_detect import analyze_pdf_layout
+
 # 1 PDF point = 12700 EMU
 _PT_TO_EMU = 12700
 
@@ -122,66 +124,6 @@ def _zero_paragraph_spacing(paragraph) -> None:
     p_pr.append(spacing)
 
 
-def analyze_pdf_layout(src: Path) -> dict:
-    """Detect whether PDF is scanned / designed (Canva) / simple flowing text.
-
-    Not an OCR issue when text_chars > 0 — Canva and multi-column PDFs still
-    break under flowing-text reconstruction (pdf2docx).
-    """
-    doc = fitz.open(src)
-    try:
-        total_chars = 0
-        total_text_blocks = 0
-        total_image_blocks = 0
-        total_drawings = 0
-        pages = doc.page_count
-        producer = (doc.metadata or {}).get("producer") or ""
-        creator = (doc.metadata or {}).get("creator") or ""
-        for page in doc:
-            text = page.get_text("text") or ""
-            total_chars += len(text.strip())
-            blocks = page.get_text("dict").get("blocks") or []
-            total_text_blocks += sum(1 for b in blocks if b.get("type") == 0)
-            total_image_blocks += sum(1 for b in blocks if b.get("type") == 1)
-            total_drawings += len(page.get_drawings())
-    finally:
-        doc.close()
-
-    is_scanned = total_chars < 40 and total_image_blocks > 0
-    designed_tool = any(
-        key in f"{producer} {creator}".lower()
-        for key in ("canva", "figma", "adobe illustrator", "sketch")
-    )
-    # Many absolute text boxes + vector decorations ⇒ complex floating layout
-    complex_layout = (
-        designed_tool
-        or total_drawings >= 20
-        or (pages > 0 and total_text_blocks / pages >= 25)
-    )
-    recommended = "visual" if (is_scanned or complex_layout) else "editable"
-    return {
-        "pages": pages,
-        "text_chars": total_chars,
-        "text_blocks": total_text_blocks,
-        "image_blocks": total_image_blocks,
-        "drawings": total_drawings,
-        "producer": producer,
-        "creator": creator,
-        "is_scanned": is_scanned,
-        "complex_layout": complex_layout,
-        "recommended_mode": recommended,
-        "reason": (
-            "掃描影像 PDF（無文字層，需 OCR 才能可編輯）"
-            if is_scanned
-            else (
-                "設計稿／多欄絕對定位（如 Canva），文字重建會跑版"
-                if complex_layout
-                else "文字流動版面，可嘗試可編輯重建"
-            )
-        ),
-    }
-
-
 def pdf_to_docx_visual(src: Path, dst: Path, *, dpi: float = 200) -> Path:
     """Pixel-faithful PDF → DOCX: each page becomes a full-page image.
 
@@ -243,22 +185,18 @@ def pdf_to_docx_editable(src: Path, dst: Path) -> Path:
     return dst
 
 
-def pdf_to_docx(src: Path, dst: Path, *, mode: str = "auto") -> Path:
-    """PDF → DOCX with layout-aware engine selection.
+def pdf_to_docx(src: Path, dst: Path, *, mode: str = "auto", work_dir: Path | None = None) -> Path:
+    """PDF → DOCX via detection → hybrid → quality pipeline when mode is auto/hybrid."""
+    from .pipeline import convert_pdf_to_docx_pipeline
 
-    Modes:
-      - auto: complex/Canva/scanned → visual; otherwise editable
-      - visual: page images (no reflow) — true 不跑版
-      - editable: pdf2docx text reconstruction
-    """
     mode = (mode or "auto").lower().strip()
-    if mode == "auto":
-        mode = analyze_pdf_layout(src)["recommended_mode"]
-    if mode == "visual":
-        return pdf_to_docx_visual(src, dst)
-    if mode == "editable":
-        return pdf_to_docx_editable(src, dst)
-    raise ValueError(f"未知的 layout_mode: {mode}（請用 auto / visual / editable）")
+    if mode not in {"auto", "hybrid", "visual", "editable"}:
+        raise ValueError(
+            f"未知的 layout_mode: {mode}（請用 auto / hybrid / visual / editable）"
+        )
+    base = work_dir or dst.parent
+    report = convert_pdf_to_docx_pipeline(src, dst, base, mode=mode)
+    return report.path
 
 
 def pdf_to_images(src: Path, out_dir: Path, fmt: str = "png") -> list[Path]:
@@ -404,7 +342,7 @@ def convert_file(
     # --- PDF source (layout-first) ---
     if src_ext == "pdf":
         if target_ext == "docx":
-            return pdf_to_docx(src, dst, mode=layout_mode)
+            return pdf_to_docx(src, dst, mode=layout_mode, work_dir=work_dir)
         if target_ext in ("png", "jpg"):
             pages = pdf_to_images(src, work_dir, fmt=target_ext)
             if len(pages) == 1:

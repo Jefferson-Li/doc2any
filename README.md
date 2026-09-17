@@ -16,6 +16,7 @@ For complex layouts (Canva / multi-column resumes), PDF → Word defaults to **v
 | **PDF → DOCX（可編輯）**：單欄文字重建；掃描件需先 OCR | **PDF → DOCX (editable)**: text rebuild for simple docs; scans need OCR |
 | **圖片互轉**：PNG / JPG / WebP / PDF | **Image conversion**: PNG / JPG / WebP / PDF |
 | **環境設定**：development / staging / production | **Environments**: development / staging / production |
+| **管線**：Layout Detection → Hybrid → Quality Score | **Pipeline**: detect → hybrid convert → quality score |
 | **頻率限制 + 自動清理**：防濫用、定期刪除暫存 | **Rate limit + cleanup**: abuse protection & TTL purge |
 
 > Canva 履歷跑版通常**不是 OCR**。請用「自動／視覺保版」。  

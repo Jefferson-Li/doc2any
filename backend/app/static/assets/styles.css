@@ -347,6 +347,97 @@ footer {
   line-height: 1.45;
 }
 
+.quality-card {
+  margin-top: 0.9rem;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 35, 58, 0.08);
+  animation: rise 0.45s ease both;
+}
+
+.quality-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.quality-grade {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.55rem;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+.quality-score {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.quality-score em {
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-left: 0.35rem;
+}
+
+.quality-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.quality-bars li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 2.2rem;
+  gap: 0.55rem;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.quality-bars .bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(16, 35, 58, 0.08);
+  overflow: hidden;
+}
+
+.quality-bars .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--teal), var(--sand));
+  transition: width 0.45s ease;
+}
+
+.quality-bars b {
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.quality-meta {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+
 .field {
   display: grid;
   gap: 0.35rem;

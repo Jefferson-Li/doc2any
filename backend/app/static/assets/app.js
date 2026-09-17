@@ -8,7 +8,7 @@
       "nav.formats": "支援格式",
       "hero.title": "上傳任意格式，轉成你要的格式，盡量不跑版。",
       "hero.lede":
-        "Canva／多欄履歷預設用「視覺保版」整頁對齊；簡單文件可改可編輯文字模式。",
+        "自動執行版面偵測 → 混合轉換 → 品質評分，挑出較不跑版的結果。",
       "dropzone.aria": "上傳檔案",
       "dropzone.title": "拖曳檔案到這裡",
       "dropzone.sub": "或點擊選擇 · 最大 50MB",
@@ -17,14 +17,15 @@
       "controls.layout": "版面模式",
       "controls.convert": "開始轉換",
       "controls.uploadFirst": "先上傳檔案",
-      "layout.auto": "自動（建議）",
-      "layout.visual": "視覺保版（不跑版）",
+      "layout.auto": "自動混合（建議）",
+      "layout.hybrid": "混合轉換",
+      "layout.visual": "視覺保版",
       "layout.editable": "可編輯文字",
       "status.default": "正在分析版面…",
-      "status.v1": "正在分析版面複雜度…",
-      "status.v2": "逐頁高清渲染中…",
-      "status.v3": "寫入 Word 頁面尺寸…",
-      "status.v4": "輸出保版檔案…",
+      "status.v1": "Layout Detection 分析中…",
+      "status.v2": "Hybrid Conversion 比較候選…",
+      "status.v3": "計算 Conversion Quality Score…",
+      "status.v4": "輸出最佳結果…",
       "status.e1": "正在解析文字區塊…",
       "status.e2": "重建段落與表格…",
       "status.e3": "對齊圖片位置…",
@@ -32,31 +33,40 @@
       "result.default": "轉換完成，版面已盡量保留。",
       "result.visual": "已用視覺保版輸出，版面與原 PDF 對齊。",
       "result.editable": "已輸出可編輯文字（複雜設計稿可能仍有位移）。",
+      "result.hybrid": "混合管線完成：已依品質評分選出最佳輸出。",
       "result.download": "下載檔案",
+      "quality.title": "轉換品質",
+      "quality.overall": "總分",
+      "quality.layout": "版面保真",
+      "quality.text": "文字完整",
+      "quality.edit": "可編輯性",
+      "quality.meta": "版面：{layout} · 引擎：{mode} · 等級：{grade}",
       "error.convert": "轉換失敗",
       "error.retry": "轉換失敗，請稍後再試",
-      "how.title": "怎麼做到比較不跑版",
-      "how.lede": "針對不同來源，選用最適合的轉換引擎。",
-      "how.s1.title": "不是 OCR 問題時",
+      "how.title": "轉換管線：偵測 → 混合 → 評分",
+      "how.lede": "每個 PDF→Word 都會走完整三步驟，自動選出較佳結果。",
+      "how.s1.title": "1. Layout Detection",
       "how.s1.body":
-        "有文字層的 Canva／多欄 PDF，用文字重建會把欄位打散；應改視覺保版。",
-      "how.s2.title": "視覺保版（預設）",
-      "how.s2.body": "逐頁高清渲染進 Word，版面與原 PDF 對齊，適合履歷與設計稿。",
-      "how.s3.title": "可編輯文字",
-      "how.s3.body": "單欄論文／報告較適合；掃描件需先 OCR 才有可選文字。",
+        "判斷掃描／設計稿／多欄／簡單文字，並給出建議模式與信心分數。",
+      "how.s2.title": "2. Hybrid Conversion",
+      "how.s2.body": "同時評估視覺保版與可編輯重建，依版面類型挑選勝者。",
+      "how.s3.title": "3. Quality Score",
+      "how.s3.body": "輸出版面保真、文字完整、可編輯性與總分，方便你判斷結果。",
       "formats.title": "支援路徑",
       "formats.loading": "正在讀取引擎狀態…",
-      "formats.loReady": "LibreOffice 已就緒。PDF→Word 對設計稿預設視覺保版。",
+      "formats.loReady": "LibreOffice 已就緒。PDF→Word 走偵測→混合→評分管線。",
       "formats.coreReady":
-        "PDF→Word 已改為視覺保版（Canva／履歷不跑版）。安裝 LibreOffice 可擴充更多 Office 路徑。",
+        "PDF→Word 已啟用 Layout Detection → Hybrid → Quality Score。",
       "formats.unavailable": "無法讀取引擎狀態，仍可嘗試上傳轉換。",
       "env.banner": "目前環境：{label}",
       "hint.mode.visual": "視覺保版",
       "hint.mode.editable": "可編輯文字",
+      "hint.mode.hybrid": "混合轉換",
       "hint.scanned": "掃描影像 PDF（無文字層，需 OCR 才能可編輯）",
       "hint.complex": "設計稿／多欄絕對定位（如 Canva），文字重建會跑版",
-      "hint.simple": "文字流動版面，可嘗試可編輯重建",
-      "hint.template": "偵測：{reason} → 建議「{mode}」",
+      "hint.designed": "設計稿工具匯出（如 Canva），建議視覺／混合保版",
+      "hint.simple": "文字流動版面，可嘗試可編輯或混合轉換",
+      "hint.template": "偵測：{reason}（信心 {confidence}）→ 建議「{mode}」",
       footer: "Doc2Any · 本機轉換，檔案不會送到第三方雲端",
     },
     en: {
@@ -67,7 +77,7 @@
       "nav.formats": "Formats",
       "hero.title": "Upload any format, convert to yours—without wrecking the layout.",
       "hero.lede":
-        "Canva / multi-column resumes default to visual fidelity. Simple docs can use editable text mode.",
+        "Runs Layout Detection → Hybrid Conversion → Quality Score to pick the safer output.",
       "dropzone.aria": "Upload a file",
       "dropzone.title": "Drop a file here",
       "dropzone.sub": "or click to browse · max 50MB",
@@ -76,14 +86,15 @@
       "controls.layout": "Layout mode",
       "controls.convert": "Convert",
       "controls.uploadFirst": "Upload a file first",
-      "layout.auto": "Auto (recommended)",
-      "layout.visual": "Visual (layout-safe)",
+      "layout.auto": "Auto hybrid (recommended)",
+      "layout.hybrid": "Hybrid conversion",
+      "layout.visual": "Visual fidelity",
       "layout.editable": "Editable text",
       "status.default": "Analyzing layout…",
-      "status.v1": "Checking layout complexity…",
-      "status.v2": "Rendering pages in high quality…",
-      "status.v3": "Writing Word page size…",
-      "status.v4": "Exporting layout-safe file…",
+      "status.v1": "Layout Detection…",
+      "status.v2": "Hybrid Conversion comparing candidates…",
+      "status.v3": "Computing Conversion Quality Score…",
+      "status.v4": "Exporting the best result…",
       "status.e1": "Parsing text blocks…",
       "status.e2": "Rebuilding paragraphs & tables…",
       "status.e3": "Aligning images…",
@@ -92,36 +103,45 @@
       "result.visual": "Exported with visual fidelity—aligned to the original PDF.",
       "result.editable":
         "Editable text exported (complex designs may still shift).",
+      "result.hybrid": "Hybrid pipeline finished—best scored output selected.",
       "result.download": "Download",
+      "quality.title": "Conversion quality",
+      "quality.overall": "Overall",
+      "quality.layout": "Layout",
+      "quality.text": "Text",
+      "quality.edit": "Editable",
+      "quality.meta": "Layout: {layout} · Engine: {mode} · Grade: {grade}",
       "error.convert": "Conversion failed",
       "error.retry": "Conversion failed. Please try again.",
-      "how.title": "How we avoid broken layouts",
-      "how.lede": "Pick the engine that fits the source document.",
-      "how.s1.title": "When it is not an OCR issue",
+      "how.title": "Pipeline: Detect → Hybrid → Score",
+      "how.lede": "Every PDF→Word run follows three steps and picks the better result.",
+      "how.s1.title": "1. Layout Detection",
       "how.s1.body":
-        "Text-layer Canva / multi-column PDFs break under text rebuild—use visual mode.",
-      "how.s2.title": "Visual fidelity (default)",
+        "Classifies scanned / designed / multi-column / simple text with a confidence score.",
+      "how.s2.title": "2. Hybrid Conversion",
       "how.s2.body":
-        "Each page is rendered into Word at high quality—ideal for resumes and design PDFs.",
-      "how.s3.title": "Editable text",
+        "Compares visual fidelity vs editable rebuild and selects the winner.",
+      "how.s3.title": "3. Quality Score",
       "how.s3.body":
-        "Best for single-column papers/reports. Scanned PDFs need OCR first.",
+        "Reports layout fidelity, text completeness, editability, and an overall grade.",
       "formats.title": "Supported routes",
       "formats.loading": "Loading engine status…",
       "formats.loReady":
-        "LibreOffice is ready. PDF→Word uses visual fidelity for design PDFs by default.",
+        "LibreOffice is ready. PDF→Word uses detect → hybrid → score.",
       "formats.coreReady":
-        "PDF→Word uses visual fidelity (layout-safe for Canva/resumes). Install LibreOffice for more Office routes.",
+        "PDF→Word pipeline: Layout Detection → Hybrid Conversion → Quality Score.",
       "formats.unavailable":
         "Could not load engine status. You can still try converting.",
       "env.banner": "Environment: {label}",
       "hint.mode.visual": "Visual",
       "hint.mode.editable": "Editable text",
+      "hint.mode.hybrid": "Hybrid",
       "hint.scanned": "Scanned image PDF (no text layer—OCR needed for editable text)",
       "hint.complex":
         "Designed / multi-column absolute layout (e.g. Canva)—text rebuild will break",
-      "hint.simple": "Flowing text layout—editable rebuild may work",
-      "hint.template": "Detected: {reason} → recommend “{mode}”",
+      "hint.designed": "Design-tool export (e.g. Canva)—prefer visual / hybrid",
+      "hint.simple": "Flowing text layout—editable or hybrid may work",
+      "hint.template": "Detected: {reason} (confidence {confidence}) → recommend “{mode}”",
       footer: "Doc2Any · Local conversion—files never leave your machine",
     },
   };
@@ -146,6 +166,16 @@
   const resultNote = document.getElementById("resultNote");
   const downloadBtn = document.getElementById("downloadBtn");
   const errorEl = document.getElementById("error");
+  const qualityCard = document.getElementById("qualityCard");
+  const qualityGrade = document.getElementById("qualityGrade");
+  const qualityOverall = document.getElementById("qualityOverall");
+  const scoreLayout = document.getElementById("scoreLayout");
+  const scoreText = document.getElementById("scoreText");
+  const scoreEdit = document.getElementById("scoreEdit");
+  const barLayout = document.getElementById("barLayout");
+  const barText = document.getElementById("barText");
+  const barEdit = document.getElementById("barEdit");
+  const qualityMeta = document.getElementById("qualityMeta");
   const formatGrid = document.getElementById("formatGrid");
   const engineNote = document.getElementById("engineNote");
   const envBanner = document.getElementById("envBanner");
@@ -257,24 +287,63 @@
 
   function analyzeReasonKey(data) {
     if (!data) return null;
-    if (data.is_scanned) return "hint.scanned";
-    if (data.complex_layout) return "hint.complex";
+    if (data.is_scanned || data.layout_type === "scanned") return "hint.scanned";
+    if (data.layout_type === "designed") return "hint.designed";
+    if (data.complex_layout || data.layout_type === "complex") return "hint.complex";
     return "hint.simple";
+  }
+
+  function modeLabelKey(mode) {
+    if (mode === "visual") return "hint.mode.visual";
+    if (mode === "hybrid") return "hint.mode.hybrid";
+    return "hint.mode.editable";
   }
 
   function renderAnalyzeHint() {
     if (!lastAnalyze || !selectedFile || extOf(selectedFile.name) !== "pdf") {
       return;
     }
-    const modeKey =
-      lastAnalyze.recommended_mode === "visual"
-        ? "hint.mode.visual"
-        : "hint.mode.editable";
+    const mode = lastAnalyze.recommended_mode || "hybrid";
     const reason = t(analyzeReasonKey(lastAnalyze));
+    const confidence = Math.round((lastAnalyze.confidence || 0) * 100);
     layoutHint.textContent = t("hint.template")
       .replace("{reason}", reason)
-      .replace("{mode}", t(modeKey));
+      .replace("{confidence}", `${confidence}%`)
+      .replace("{mode}", t(modeLabelKey(mode)));
     layoutHint.classList.remove("hidden");
+  }
+
+  function hideQuality() {
+    if (qualityCard) qualityCard.classList.add("hidden");
+  }
+
+  function showQualityFromHeaders(headers) {
+    if (!qualityCard) return;
+    const overall = headers.get("X-Doc2Any-Score");
+    if (!overall) {
+      hideQuality();
+      return;
+    }
+    const grade = headers.get("X-Doc2Any-Grade") || "-";
+    const layout = Number(headers.get("X-Doc2Any-Score-Layout") || 0);
+    const text = Number(headers.get("X-Doc2Any-Score-Text") || 0);
+    const edit = Number(headers.get("X-Doc2Any-Score-Edit") || 0);
+    const layoutType = headers.get("X-Doc2Any-Layout-Type") || "-";
+    const modeUsed = headers.get("X-Doc2Any-Mode-Used") || "-";
+
+    qualityGrade.textContent = grade;
+    qualityOverall.textContent = overall;
+    scoreLayout.textContent = String(layout);
+    scoreText.textContent = String(text);
+    scoreEdit.textContent = String(edit);
+    barLayout.style.width = `${Math.max(0, Math.min(100, layout))}%`;
+    barText.style.width = `${Math.max(0, Math.min(100, text))}%`;
+    barEdit.style.width = `${Math.max(0, Math.min(100, edit))}%`;
+    qualityMeta.textContent = t("quality.meta")
+      .replace("{layout}", layoutType)
+      .replace("{mode}", modeUsed)
+      .replace("{grade}", grade);
+    qualityCard.classList.remove("hidden");
   }
 
   async function analyzeSelectedPdf(file) {
@@ -316,6 +385,7 @@
     resultEl.classList.add("hidden");
     statusEl.classList.add("hidden");
     layoutHint.classList.add("hidden");
+    hideQuality();
     lastAnalyze = null;
     if (downloadUrl) {
       URL.revokeObjectURL(downloadUrl);
@@ -408,14 +478,13 @@
     if (!selectedFile || !targetFormat.value) return;
     clearError();
     resultEl.classList.add("hidden");
+    hideQuality();
     statusEl.classList.remove("hidden");
     convertBtn.disabled = true;
 
-    const useVisualMsgs =
-      layoutMode.value === "visual" ||
-      layoutMode.value === "auto" ||
-      targetFormat.value !== "docx";
-    const messages = useVisualMsgs
+    const usePipelineMsgs =
+      layoutMode.value !== "editable" || targetFormat.value === "docx";
+    const messages = usePipelineMsgs
       ? [t("status.v1"), t("status.v2"), t("status.v3"), t("status.v4")]
       : [t("status.e1"), t("status.e2"), t("status.e3"), t("status.e4")];
 
@@ -457,9 +526,12 @@
       downloadBtn.download = outName;
       resultName.textContent = outName;
       if (resultNote) {
-        resultNote.textContent =
-          layoutMode.value === "editable" ? t("result.editable") : t("result.visual");
+        const used = (res.headers.get("X-Doc2Any-Mode-Used") || "").toLowerCase();
+        if (used === "editable") resultNote.textContent = t("result.editable");
+        else if (used === "visual") resultNote.textContent = t("result.visual");
+        else resultNote.textContent = t("result.hybrid");
       }
+      showQualityFromHeaders(res.headers);
       resultEl.classList.remove("hidden");
     } catch (err) {
       showError(err.message || t("error.retry"));
