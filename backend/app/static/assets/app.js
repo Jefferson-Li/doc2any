@@ -35,12 +35,15 @@
       "result.editable": "已輸出可編輯文字（複雜設計稿可能仍有位移）。",
       "result.hybrid": "混合管線完成：已依品質評分選出最佳輸出。",
       "result.download": "下載檔案",
-      "quality.title": "轉換品質",
-      "quality.overall": "總分",
-      "quality.layout": "版面保真",
-      "quality.text": "文字完整",
-      "quality.edit": "可編輯性",
+      "quality.title": "轉換品質 Conversion Quality",
+      "quality.overall": "Overall",
+      "quality.layout": "Layout similarity",
+      "quality.text": "Text preservation",
+      "quality.image": "Image preservation",
+      "quality.align": "Element alignment",
+      "quality.structure": "Page structure",
       "quality.meta": "版面：{layout} · 引擎：{mode} · 等級：{grade}",
+      "quality.retry": "已自動重試：{from} → {to}",
       "error.convert": "轉換失敗",
       "error.retry": "轉換失敗，請稍後再試",
       "how.title": "轉換管線：偵測 → 混合 → 評分",
@@ -49,9 +52,10 @@
       "how.s1.body":
         "判斷掃描／設計稿／多欄／簡單文字，並給出建議模式與信心分數。",
       "how.s2.title": "2. Hybrid Conversion",
-      "how.s2.body": "同時評估視覺保版與可編輯重建，依版面類型挑選勝者。",
+      "how.s2.body": "同時評估視覺保版與可編輯重建；版面分數過低會自動重試視覺保版。",
       "how.s3.title": "3. Quality Score",
-      "how.s3.body": "輸出版面保真、文字完整、可編輯性與總分，方便你判斷結果。",
+      "how.s3.body":
+        "可解釋指標：Layout / Text / Image / Alignment / Page structure，並輸出 Overall。",
       "formats.title": "支援路徑",
       "formats.loading": "正在讀取引擎狀態…",
       "formats.loReady": "LibreOffice 已就緒。PDF→Word 走偵測→混合→評分管線。",
@@ -105,12 +109,15 @@
         "Editable text exported (complex designs may still shift).",
       "result.hybrid": "Hybrid pipeline finished—best scored output selected.",
       "result.download": "Download",
-      "quality.title": "Conversion quality",
+      "quality.title": "Conversion Quality",
       "quality.overall": "Overall",
-      "quality.layout": "Layout",
-      "quality.text": "Text",
-      "quality.edit": "Editable",
+      "quality.layout": "Layout similarity",
+      "quality.text": "Text preservation",
+      "quality.image": "Image preservation",
+      "quality.align": "Element alignment",
+      "quality.structure": "Page structure",
       "quality.meta": "Layout: {layout} · Engine: {mode} · Grade: {grade}",
+      "quality.retry": "Auto-retried: {from} → {to}",
       "error.convert": "Conversion failed",
       "error.retry": "Conversion failed. Please try again.",
       "how.title": "Pipeline: Detect → Hybrid → Score",
@@ -120,10 +127,10 @@
         "Classifies scanned / designed / multi-column / simple text with a confidence score.",
       "how.s2.title": "2. Hybrid Conversion",
       "how.s2.body":
-        "Compares visual fidelity vs editable rebuild and selects the winner.",
+        "Compares visual fidelity vs editable rebuild; auto-retries visual if layout score collapses.",
       "how.s3.title": "3. Quality Score",
       "how.s3.body":
-        "Reports layout fidelity, text completeness, editability, and an overall grade.",
+        "Explainable metrics: Layout / Text / Image / Alignment / Page structure → Overall.",
       "formats.title": "Supported routes",
       "formats.loading": "Loading engine status…",
       "formats.loReady":
@@ -171,10 +178,14 @@
   const qualityOverall = document.getElementById("qualityOverall");
   const scoreLayout = document.getElementById("scoreLayout");
   const scoreText = document.getElementById("scoreText");
-  const scoreEdit = document.getElementById("scoreEdit");
+  const scoreImage = document.getElementById("scoreImage");
+  const scoreAlign = document.getElementById("scoreAlign");
+  const scoreStructure = document.getElementById("scoreStructure");
   const barLayout = document.getElementById("barLayout");
   const barText = document.getElementById("barText");
-  const barEdit = document.getElementById("barEdit");
+  const barImage = document.getElementById("barImage");
+  const barAlign = document.getElementById("barAlign");
+  const barStructure = document.getElementById("barStructure");
   const qualityMeta = document.getElementById("qualityMeta");
   const formatGrid = document.getElementById("formatGrid");
   const engineNote = document.getElementById("engineNote");
@@ -325,9 +336,19 @@
       return;
     }
     const grade = headers.get("X-Doc2Any-Grade") || "-";
-    const layout = Number(headers.get("X-Doc2Any-Score-Layout") || 0);
-    const text = Number(headers.get("X-Doc2Any-Score-Text") || 0);
-    const edit = Number(headers.get("X-Doc2Any-Score-Edit") || 0);
+    const layout = Number(
+      headers.get("X-Doc2Any-Score-Layout-Similarity") ||
+        headers.get("X-Doc2Any-Score-Layout") ||
+        0
+    );
+    const text = Number(
+      headers.get("X-Doc2Any-Score-Text-Preservation") ||
+        headers.get("X-Doc2Any-Score-Text") ||
+        0
+    );
+    const image = Number(headers.get("X-Doc2Any-Score-Image-Preservation") || 0);
+    const align = Number(headers.get("X-Doc2Any-Score-Element-Alignment") || 0);
+    const structure = Number(headers.get("X-Doc2Any-Score-Page-Structure") || 0);
     const layoutType = headers.get("X-Doc2Any-Layout-Type") || "-";
     const modeUsed = headers.get("X-Doc2Any-Mode-Used") || "-";
 
@@ -335,15 +356,41 @@
     qualityOverall.textContent = overall;
     scoreLayout.textContent = String(layout);
     scoreText.textContent = String(text);
-    scoreEdit.textContent = String(edit);
+    scoreImage.textContent = String(image);
+    scoreAlign.textContent = String(align);
+    scoreStructure.textContent = String(structure);
     barLayout.style.width = `${Math.max(0, Math.min(100, layout))}%`;
     barText.style.width = `${Math.max(0, Math.min(100, text))}%`;
-    barEdit.style.width = `${Math.max(0, Math.min(100, edit))}%`;
+    barImage.style.width = `${Math.max(0, Math.min(100, image))}%`;
+    barAlign.style.width = `${Math.max(0, Math.min(100, align))}%`;
+    barStructure.style.width = `${Math.max(0, Math.min(100, structure))}%`;
     qualityMeta.textContent = t("quality.meta")
       .replace("{layout}", layoutType)
       .replace("{mode}", modeUsed)
       .replace("{grade}", grade);
     qualityCard.classList.remove("hidden");
+
+    // Enrich meta from full report when available
+    const reportUrl = headers.get("X-Doc2Any-Report");
+    if (reportUrl) {
+      fetch(reportUrl)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!data) return;
+          if (data.retry) {
+            qualityMeta.textContent =
+              t("quality.meta")
+                .replace("{layout}", layoutType)
+                .replace("{mode}", modeUsed)
+                .replace("{grade}", grade) +
+              " · " +
+              t("quality.retry")
+                .replace("{from}", data.retry.from_mode)
+                .replace("{to}", data.retry.to_mode);
+          }
+        })
+        .catch(() => {});
+    }
   }
 
   async function analyzeSelectedPdf(file) {

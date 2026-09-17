@@ -304,13 +304,22 @@ async def convert(
             "X-Doc2Any-Mode-Used": str(report_meta.get("mode_used", "")),
             "X-Doc2Any-Score": str(q.get("overall", "")),
             "X-Doc2Any-Grade": str(q.get("grade", "")),
-            "X-Doc2Any-Score-Layout": str(q.get("layout_fidelity", "")),
-            "X-Doc2Any-Score-Text": str(q.get("text_completeness", "")),
+            "X-Doc2Any-Score-Layout-Similarity": str(q.get("layout_similarity", "")),
+            "X-Doc2Any-Score-Text-Preservation": str(q.get("text_preservation", "")),
+            "X-Doc2Any-Score-Image-Preservation": str(q.get("image_preservation", "")),
+            "X-Doc2Any-Score-Element-Alignment": str(q.get("element_alignment", "")),
+            "X-Doc2Any-Score-Page-Structure": str(q.get("page_structure", "")),
+            # Legacy aliases
+            "X-Doc2Any-Score-Layout": str(q.get("layout_similarity", "")),
+            "X-Doc2Any-Score-Text": str(q.get("text_preservation", "")),
             "X-Doc2Any-Score-Edit": str(q.get("editability", "")),
             "X-Doc2Any-Report": f"/api/jobs/{job_id}/report",
             "Access-Control-Expose-Headers": (
                 "X-Doc2Any-Pipeline, X-Doc2Any-Layout-Type, X-Doc2Any-Mode-Used, "
-                "X-Doc2Any-Score, X-Doc2Any-Grade, X-Doc2Any-Score-Layout, "
+                "X-Doc2Any-Score, X-Doc2Any-Grade, "
+                "X-Doc2Any-Score-Layout-Similarity, X-Doc2Any-Score-Text-Preservation, "
+                "X-Doc2Any-Score-Image-Preservation, X-Doc2Any-Score-Element-Alignment, "
+                "X-Doc2Any-Score-Page-Structure, X-Doc2Any-Score-Layout, "
                 "X-Doc2Any-Score-Text, X-Doc2Any-Score-Edit, X-Doc2Any-Report, "
                 "Content-Disposition"
             ),

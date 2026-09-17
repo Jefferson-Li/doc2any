@@ -19,6 +19,7 @@ class ConversionReport:
     layout: dict[str, Any]
     quality: dict[str, Any]
     candidates: list[dict[str, Any]] = field(default_factory=list)
+    retry: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -30,15 +31,30 @@ class ConversionReport:
             "path": str(self.path),
             "mode_used": self.mode_used,
             "layout": self.layout,
-            "quality": self.quality,
+            "quality": {
+                "overall": self.quality.get("overall"),
+                "grade": self.quality.get("grade"),
+                "layout_similarity": self.quality.get("layout_similarity"),
+                "text_preservation": self.quality.get("text_preservation"),
+                "image_preservation": self.quality.get("image_preservation"),
+                "element_alignment": self.quality.get("element_alignment"),
+                "page_structure": self.quality.get("page_structure"),
+                "weights": self.quality.get("weights"),
+                "explain": self.quality.get("explain"),
+                "thresholds": self.quality.get("thresholds"),
+                "mode_used": self.quality.get("mode_used"),
+            },
+            "retry": self.retry,
             "candidates": [
                 {
                     "mode": c["mode"],
                     "overall": c["quality"]["overall"],
                     "grade": c["quality"]["grade"],
-                    "layout_fidelity": c["quality"]["layout_fidelity"],
-                    "text_completeness": c["quality"]["text_completeness"],
-                    "editability": c["quality"]["editability"],
+                    "layout_similarity": c["quality"].get("layout_similarity"),
+                    "text_preservation": c["quality"].get("text_preservation"),
+                    "image_preservation": c["quality"].get("image_preservation"),
+                    "element_alignment": c["quality"].get("element_alignment"),
+                    "page_structure": c["quality"].get("page_structure"),
                 }
                 for c in self.candidates
             ],
@@ -58,35 +74,32 @@ def convert_pdf_to_docx_pipeline(
     work_dir: Path,
     *,
     mode: str = "auto",
-    # late imports avoid circular deps with engine helpers
 ) -> ConversionReport:
-    """Run detection → hybrid (or forced mode) → quality scoring."""
+    """Run detection → hybrid (or forced mode) → quality scoring (+ auto-retry)."""
     from .engine import pdf_to_docx_editable, pdf_to_docx_visual
 
     mode = (mode or "auto").lower().strip()
     layout = detect_layout(src)
 
-    # Forced single-engine modes still get scored
     if mode in {"visual", "editable"}:
+        used = mode
         if mode == "visual":
             pdf_to_docx_visual(src, dst)
         else:
             if layout.get("is_scanned"):
-                # editable on pure scans is useless — fall back visually
                 pdf_to_docx_visual(src, dst)
-                mode = "visual"
+                used = "visual"
             else:
                 pdf_to_docx_editable(src, dst)
-        quality = score_conversion(src, dst, mode_used=mode, layout=layout)
+        quality = score_conversion(src, dst, mode_used=used, layout=layout)
         return ConversionReport(
             path=dst,
-            mode_used=mode,
+            mode_used=used,
             layout=layout,
-            quality=quality,
-            candidates=[{"mode": mode, "path": dst, "quality": quality}],
+            quality={**quality, "pipeline_step": "quality_score"},
+            candidates=[{"mode": used, "path": dst, "quality": quality}],
         )
 
-    # auto / hybrid: build candidates and pick best
     candidates: list[dict[str, Any]] = []
 
     visual_path = work_dir / f"{src.stem}.__visual__.docx"
@@ -105,24 +118,28 @@ def convert_pdf_to_docx_pipeline(
                 {"mode": "editable", "path": editable_path, "quality": e_quality}
             )
         except Exception:  # noqa: BLE001
-            # Keep visual-only if editable engine crashes on exotic PDFs
             pass
 
     best = pick_best_candidate(candidates, layout)
     shutil.copy2(best["path"], dst)
 
-    report = ConversionReport(
+    retry = None
+    if best.get("retried_from"):
+        retry = {
+            "from_mode": best["retried_from"],
+            "to_mode": best["mode"],
+            "reason": best.get("retry_reason"),
+        }
+
+    return ConversionReport(
         path=dst,
         mode_used=best["mode"],
-        layout=layout,
-        quality=best["quality"],
+        layout={
+            **layout,
+            "pipeline_step": "hybrid_conversion",
+            "hybrid_selected": best["mode"],
+        },
+        quality={**best["quality"], "pipeline_step": "quality_score"},
         candidates=candidates,
+        retry=retry,
     )
-    report.layout = {
-        **layout,
-        "pipeline_step": "hybrid_conversion",
-        "hybrid_selected": best["mode"],
-    }
-    # Re-tag quality step for clarity
-    report.quality = {**best["quality"], "pipeline_step": "quality_score"}
-    return report

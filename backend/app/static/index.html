@@ -119,28 +119,38 @@
 
             <div class="quality-card hidden" id="qualityCard" aria-live="polite">
               <div class="quality-head">
-                <strong data-i18n="quality.title">轉換品質</strong>
+                <strong data-i18n="quality.title">Conversion Quality</strong>
                 <span class="quality-grade" id="qualityGrade">A</span>
               </div>
               <p class="quality-score">
-                <span data-i18n="quality.overall">總分</span>
-                <em id="qualityOverall">0</em>
+                <span data-i18n="quality.overall">Overall</span>
+                <em id="qualityOverall">0</em><span class="quality-pct">%</span>
               </p>
-              <ul class="quality-bars">
+              <ul class="quality-bars" id="qualityBars">
                 <li>
-                  <span data-i18n="quality.layout">版面保真</span>
+                  <span data-i18n="quality.layout">Layout similarity</span>
                   <div class="bar"><i id="barLayout"></i></div>
-                  <b id="scoreLayout">0</b>
+                  <b><span id="scoreLayout">0</span>%</b>
                 </li>
                 <li>
-                  <span data-i18n="quality.text">文字完整</span>
+                  <span data-i18n="quality.text">Text preservation</span>
                   <div class="bar"><i id="barText"></i></div>
-                  <b id="scoreText">0</b>
+                  <b><span id="scoreText">0</span>%</b>
                 </li>
                 <li>
-                  <span data-i18n="quality.edit">可編輯性</span>
-                  <div class="bar"><i id="barEdit"></i></div>
-                  <b id="scoreEdit">0</b>
+                  <span data-i18n="quality.image">Image preservation</span>
+                  <div class="bar"><i id="barImage"></i></div>
+                  <b><span id="scoreImage">0</span>%</b>
+                </li>
+                <li>
+                  <span data-i18n="quality.align">Element alignment</span>
+                  <div class="bar"><i id="barAlign"></i></div>
+                  <b><span id="scoreAlign">0</span>%</b>
+                </li>
+                <li>
+                  <span data-i18n="quality.structure">Page structure</span>
+                  <div class="bar"><i id="barStructure"></i></div>
+                  <b><span id="scoreStructure">0</span>%</b>
                 </li>
               </ul>
               <p class="quality-meta" id="qualityMeta"></p>
