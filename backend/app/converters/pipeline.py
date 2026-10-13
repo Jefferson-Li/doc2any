@@ -85,13 +85,18 @@ def convert_pdf_to_docx_pipeline(
         used = mode
         if mode == "visual":
             pdf_to_docx_visual(src, dst)
+            quality = score_conversion(src, dst, mode_used="visual", layout=layout)
         else:
             if layout.get("is_scanned"):
                 pdf_to_docx_visual(src, dst)
                 used = "visual"
+                quality = score_conversion(src, dst, mode_used="visual", layout=layout)
             else:
                 pdf_to_docx_editable(src, dst)
-        quality = score_conversion(src, dst, mode_used=used, layout=layout)
+                used = "positioned"
+                quality = score_conversion(
+                    src, dst, mode_used="positioned", layout=layout
+                )
         return ConversionReport(
             path=dst,
             mode_used=used,
@@ -112,10 +117,10 @@ def convert_pdf_to_docx_pipeline(
         try:
             pdf_to_docx_editable(src, editable_path)
             e_quality = score_conversion(
-                src, editable_path, mode_used="editable", layout=layout
+                src, editable_path, mode_used="positioned", layout=layout
             )
             candidates.append(
-                {"mode": "editable", "path": editable_path, "quality": e_quality}
+                {"mode": "positioned", "path": editable_path, "quality": e_quality}
             )
         except Exception:  # noqa: BLE001
             pass

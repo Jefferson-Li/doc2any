@@ -21,6 +21,7 @@ from typing import Any
 import fitz
 import numpy as np
 from docx import Document
+from docx.oxml.ns import qn
 from PIL import Image
 
 
@@ -50,11 +51,18 @@ def _pdf_text(path: Path) -> str:
 
 
 def _docx_text(path: Path) -> str:
+    """Extract all Word text including textboxes (w:t nodes)."""
     document = Document(str(path))
-    parts: list[str] = [p.text for p in document.paragraphs]
+    parts: list[str] = []
+    # paragraphs / tables
+    parts.extend(p.text for p in document.paragraphs if p.text)
     for table in document.tables:
         for row in table.rows:
             parts.append("\t".join(cell.text for cell in row.cells))
+    # textboxes / headers etc.
+    for node in document.element.iter(qn("w:t")):
+        if node.text:
+            parts.append(node.text)
     return "\n".join(parts)
 
 
@@ -166,7 +174,8 @@ def _layout_similarity(
     """Explainable layout similarity (%)."""
     detail: dict[str, Any] = {"method": mode_used}
 
-    if mode_used == "visual":
+    # Visual page image OR positioned backdrop → pixel compare
+    if mode_used in {"visual", "positioned"}:
         pdf_pages = _render_pdf_pages(pdf_path)
         media = _docx_media_images(docx_path)
         detail["pdf_pages_compared"] = len(pdf_pages)
@@ -185,10 +194,13 @@ def _layout_similarity(
                 )
         page_sim = float(np.mean(sims)) if sims else 0.85
         aspect = float(np.mean(aspects)) if aspects else 0.9
-        # Visual path preserves pixels by construction; image compare validates packaging
         score = 100.0 * (0.75 * page_sim + 0.25 * aspect)
-        # Floor: visual should remain strong even if resize noise
-        score = max(score, 88.0 if sims else 92.0)
+        # Positioned covers glyphs then overlays text — compare may be slightly lower
+        floor = 82.0 if mode_used == "positioned" else 88.0
+        score = max(score, floor if sims else 90.0)
+        if mode_used == "positioned":
+            # Reward when editable text exists alongside backdrop
+            score = min(100.0, score + 4.0 * overlap)
         detail.update(
             {
                 "page_image_similarity": round(page_sim, 3),
@@ -197,7 +209,7 @@ def _layout_similarity(
         )
         return _clamp(score), detail
 
-    # Editable / heuristic path — no DOCX rasterizer without LibreOffice
+    # Editable flowing / heuristic path
     detail["method"] = "heuristic_editable"
     base = 42.0 + 48.0 * overlap - 45.0 * spaced
     if layout.get("layout_type") in {"designed", "complex", "scanned"}:
@@ -222,7 +234,6 @@ def _text_preservation(
     is_scanned: bool,
 ) -> tuple[float, dict[str, Any]]:
     if mode_used == "visual":
-        # Glyphs preserved as page imagery (not extractable text)
         score = 96.0 if pdf_chars > 0 or is_scanned else 80.0
         return score, {
             "method": "visual_raster_preservation",
@@ -233,7 +244,11 @@ def _text_preservation(
     coverage = min(1.0, docx_chars / max(1, pdf_chars)) if pdf_chars else 1.0
     score = 100.0 * (0.7 * overlap + 0.3 * coverage) - 40.0 * spaced
     return _clamp(score), {
-        "method": "token_overlap_and_coverage",
+        "method": (
+            "positioned_textbox_overlap"
+            if mode_used == "positioned"
+            else "token_overlap_and_coverage"
+        ),
         "text_overlap": round(overlap, 3),
         "char_coverage": round(coverage, 3),
         "spaced_out_ratio": round(spaced, 3),
@@ -251,7 +266,7 @@ def _image_preservation(pdf_path: Path, docx_path: Path, *, mode_used: str) -> t
         "docx_images": docx_images,
         "mode_used": mode_used,
     }
-    if mode_used == "visual":
+    if mode_used in {"visual", "positioned"}:
         # One rendered page image per page counts as preservation of visual content
         doc = fitz.open(pdf_path)
         try:
@@ -279,11 +294,17 @@ def _element_alignment(
     layout: dict[str, Any],
     layout_sim_detail: dict[str, Any],
 ) -> tuple[float, dict[str, Any]]:
-    if mode_used == "visual":
+    if mode_used in {"visual", "positioned"}:
         aspect = float(layout_sim_detail.get("aspect_ratio_score") or 0.9)
         score = 100.0 * (0.55 + 0.45 * aspect)
+        if mode_used == "positioned":
+            score = min(100.0, score + 3.0)
         return _clamp(score), {
-            "method": "page_image_aspect_alignment",
+            "method": (
+                "positioned_textbox_alignment"
+                if mode_used == "positioned"
+                else "page_image_aspect_alignment"
+            ),
             "aspect_ratio_score": round(aspect, 3),
         }
 
@@ -321,12 +342,13 @@ def _page_structure(
         "docx_tables": stats["tables"],
     }
 
-    if mode_used == "visual":
-        # Expect ~1 section (or page) image per PDF page
-        if sections == pdf_pages or stats["inline_shapes"] >= pdf_pages:
-            score = 98.0 if sections == pdf_pages else 94.0
+    if mode_used in {"visual", "positioned"}:
+        if sections == pdf_pages:
+            score = 98.0
+        elif sections >= 1:
+            score = 94.0
         else:
-            score = 100.0 * min(sections, pdf_pages) / max(1, pdf_pages)
+            score = 70.0
         return _clamp(score), detail
 
     # Editable: pages may map to flowing sections; penalize explosion or emptiness
@@ -439,7 +461,10 @@ def score_conversion(
         "layout_fidelity": scores["layout_similarity"],
         "text_completeness": scores["text_preservation"],
         "editability": round(
-            22.0 if mode_used == "visual" else _clamp(92.0 - 50.0 * spaced), 1
+            22.0
+            if mode_used == "visual"
+            else (88.0 if mode_used == "positioned" else _clamp(92.0 - 50.0 * spaced)),
+            1,
         ),
         "weights": weights,
         "explain": {
@@ -460,52 +485,64 @@ def pick_best_candidate(
     candidates: list[dict[str, Any]],
     layout: dict[str, Any],
 ) -> dict[str, Any]:
-    """Choose winner; prefer editable on simple docs; retry visual if layout collapses."""
+    """Prefer editable Word text; only fall back to visual (page images) when needed.
+
+    Visual mode embeds full-page images — users cannot edit text in Word.
+    Therefore auto/hybrid must not pick visual unless editable is unusable
+    (scanned PDF, or reconstruction collapsed).
+    """
     if not candidates:
         raise ValueError("No conversion candidates")
 
     layout_type = layout.get("layout_type", "simple")
     visual = next((c for c in candidates if c["mode"] == "visual"), None)
-    editable = next((c for c in candidates if c["mode"] == "editable"), None)
+    editable = next(
+        (c for c in candidates if c["mode"] in {"editable", "positioned"}), None
+    )
 
-    # Simple flowing docs: keep editable when reconstruction is healthy
-    if layout_type == "simple" and editable:
+    # Scanned PDFs have no text layer — visual is the only honest option
+    if layout_type == "scanned" and visual:
+        return {
+            **visual,
+            "retried_from": editable["mode"] if editable else None,
+            "retry_reason": "scanned_pdf_no_text_layer",
+        }
+
+    # Prefer positioned/editable whenever reconstruction produced usable text
+    if editable:
         eq = editable["quality"]
-        if (
-            eq.get("layout_similarity", 0) >= 60
-            and eq.get("text_preservation", 0) >= 75
-            and eq.get("overall", 0) >= 65
-        ):
+        layout_s = eq.get("layout_similarity", 0)
+        text_s = eq.get("text_preservation", 0)
+        overall = eq.get("overall", 0)
+        if text_s >= 40 and overall >= 45 and layout_s >= 35:
             return editable
 
     def rank(c: dict[str, Any]) -> float:
         q = c["quality"]
-        layout_s = q.get("layout_similarity", 0)
-        text_s = q.get("text_preservation", 0)
-        if layout_type in {"designed", "complex", "scanned"}:
-            return 0.55 * layout_s + 0.25 * q["overall"] + 0.20 * text_s
-        bonus = 3.0 if c["mode"] == "editable" and q["overall"] >= 70 else 0.0
-        return q["overall"] + bonus
+        if c["mode"] in {"editable", "positioned"}:
+            return q["overall"] + 25.0 + 0.15 * q.get("text_preservation", 0)
+        return q["overall"]
 
     best = max(candidates, key=rank)
 
-    # Auto-retry: non-visual won but layout collapsed → switch to visual
+    if best["mode"] not in {"editable", "positioned"} and editable is None and visual:
+        return visual
+
     layout_s = best["quality"].get("layout_similarity", 0)
+    text_s = best["quality"].get("text_preservation", 0)
     if (
-        visual
-        and best["mode"] != "visual"
-        and (
-            layout_s < LAYOUT_RETRY_THRESHOLD
-            or best["quality"]["overall"] < OVERALL_RETRY_THRESHOLD
-        )
+        best["mode"] in {"editable", "positioned"}
+        and visual
+        and text_s < 25
+        and layout_s < 30
         and visual["quality"].get("layout_similarity", 0) > layout_s
     ):
         return {
             **visual,
             "retried_from": best["mode"],
             "retry_reason": (
-                f"layout_similarity {layout_s} < {LAYOUT_RETRY_THRESHOLD} "
-                f"or overall {best['quality']['overall']} < {OVERALL_RETRY_THRESHOLD}"
+                f"editable unusable (text={text_s}, layout={layout_s}); "
+                "fallback to visual page images"
             ),
         }
 

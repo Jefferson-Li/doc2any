@@ -165,11 +165,10 @@ def pdf_to_docx_visual(src: Path, dst: Path, *, dpi: float = 200) -> Path:
     return dst
 
 
-def pdf_to_docx_editable(src: Path, dst: Path) -> Path:
-    """Editable reconstruction via pdf2docx (best for simple single-column docs)."""
+def pdf_to_docx_flow(src: Path, dst: Path) -> Path:
+    """Flowing editable reconstruction via pdf2docx (simple single-column docs)."""
     cv = Converter(str(src))
     try:
-        # Tighter thresholds reduce spurious tables / broken sections on dense pages
         cv.convert(
             str(dst),
             line_separate_threshold=3.0,
@@ -183,6 +182,19 @@ def pdf_to_docx_editable(src: Path, dst: Path) -> Path:
     finally:
         cv.close()
     return dst
+
+
+def pdf_to_docx_editable(src: Path, dst: Path) -> Path:
+    """Editable Word with near-original layout (positioned textboxes + backdrop).
+
+    Falls back to flowing pdf2docx only if positioned conversion fails.
+    """
+    from .positioned import pdf_to_docx_positioned
+
+    try:
+        return pdf_to_docx_positioned(src, dst)
+    except Exception:
+        return pdf_to_docx_flow(src, dst)
 
 
 def pdf_to_docx(src: Path, dst: Path, *, mode: str = "auto", work_dir: Path | None = None) -> Path:

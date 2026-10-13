@@ -93,10 +93,14 @@
               <label class="field" id="layoutField">
                 <span data-i18n="controls.layout">版面模式</span>
                 <select id="layoutMode">
-                  <option value="auto" data-i18n="layout.auto">自動混合（建議）</option>
+                  <option value="editable" data-i18n="layout.editable" selected>
+                    可編輯保版（精確定位・可改字）
+                  </option>
+                  <option value="auto" data-i18n="layout.auto">自動（優先可編輯保版）</option>
                   <option value="hybrid" data-i18n="layout.hybrid">混合轉換</option>
-                  <option value="visual" data-i18n="layout.visual">視覺保版</option>
-                  <option value="editable" data-i18n="layout.editable">可編輯文字</option>
+                  <option value="visual" data-i18n="layout.visual">
+                    視覺保版（整頁圖片・不可改字）
+                  </option>
                 </select>
               </label>
               <button type="button" class="cta" id="convertBtn" disabled data-i18n="controls.convert">
@@ -192,7 +196,7 @@
       <section class="panel" id="how">
         <h2 data-i18n="how.title">轉換管線：偵測 → 混合 → 評分</h2>
         <p class="section-lede" data-i18n="how.lede">
-          每個 PDF→Word 都會走完整三步驟，自動選出較佳結果。
+          預設目標是「Word 可改字」；整頁圖片保版僅在你主動選擇時使用。
         </p>
         <ul class="steps">
           <li>
@@ -204,13 +208,13 @@
           <li>
             <strong data-i18n="how.s2.title">2. Hybrid Conversion</strong>
             <span data-i18n="how.s2.body"
-              >同時評估視覺保版與可編輯重建，依版面類型挑選勝者。</span
+              >優先可編輯文字；只有掃描件或重建失敗才退回整頁圖片。</span
             >
           </li>
           <li>
             <strong data-i18n="how.s3.title">3. Quality Score</strong>
             <span data-i18n="how.s3.body"
-              >輸出版面保真、文字完整、可編輯性與總分，方便你判斷結果。</span
+              >可解釋指標：Layout / Text / Image / Alignment / Page structure，並輸出 Overall。</span
             >
           </li>
         </ul>

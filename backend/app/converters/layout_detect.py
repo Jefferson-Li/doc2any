@@ -109,10 +109,13 @@ def detect_layout(src: Path) -> dict[str, Any]:
 
     mixed = len({p["recommended_mode"] for p in pages_detail}) > 1
 
-    if is_scanned or designed_tool or (complex_layout and not mixed):
+    if is_scanned:
         recommended = "visual"
     elif mixed:
         recommended = "hybrid"
+    elif designed_tool or complex_layout:
+        # Prefer editable Word text; visual is opt-in when user needs pixel layout
+        recommended = "editable"
     else:
         recommended = "editable"
 
@@ -127,10 +130,10 @@ def detect_layout(src: Path) -> dict[str, Any]:
         confidence = 0.65
 
     reason_zh = {
-        "scanned": "掃描影像 PDF（無文字層，需 OCR 才能可編輯）",
-        "designed": "設計稿工具匯出（如 Canva），建議視覺／混合保版",
-        "complex": "多欄或高密度絕對定位，文字重建容易跑版",
-        "simple": "文字流動版面，可嘗試可編輯或混合轉換",
+        "scanned": "掃描影像 PDF（無文字層，需 OCR 才能可編輯；目前會用整頁圖片）",
+        "designed": "設計稿（如 Canva）：預設可編輯文字；若要完全不跑版請改選「視覺保版（整頁圖片）」",
+        "complex": "多欄／複雜版面：預設可編輯文字（可能位移）；完全保版請選視覺保版",
+        "simple": "文字流動版面，適合可編輯 Word",
     }[layout_type]
 
     return {

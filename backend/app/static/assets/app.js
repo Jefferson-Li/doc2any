@@ -8,7 +8,7 @@
       "nav.formats": "支援格式",
       "hero.title": "上傳任意格式，轉成你要的格式，盡量不跑版。",
       "hero.lede":
-        "自動執行版面偵測 → 混合轉換 → 品質評分，挑出較不跑版的結果。",
+        "預設輸出可在 Word 裡改的文字。若選「視覺保版」會變成整頁圖片，就不能改字。",
       "dropzone.aria": "上傳檔案",
       "dropzone.title": "拖曳檔案到這裡",
       "dropzone.sub": "或點擊選擇 · 最大 50MB",
@@ -17,10 +17,10 @@
       "controls.layout": "版面模式",
       "controls.convert": "開始轉換",
       "controls.uploadFirst": "先上傳檔案",
-      "layout.auto": "自動混合（建議）",
-      "layout.hybrid": "混合轉換",
-      "layout.visual": "視覺保版",
-      "layout.editable": "可編輯文字",
+      "layout.auto": "自動（優先可編輯保版）",
+      "layout.hybrid": "混合轉換（優先可編輯保版）",
+      "layout.visual": "視覺保版（整頁圖片・不可改字）",
+      "layout.editable": "可編輯保版（精確定位・可改字）",
       "status.default": "正在分析版面…",
       "status.v1": "Layout Detection 分析中…",
       "status.v2": "Hybrid Conversion 比較候選…",
@@ -31,9 +31,11 @@
       "status.e3": "對齊圖片位置…",
       "status.e4": "輸出可編輯 Word…",
       "result.default": "轉換完成，版面已盡量保留。",
-      "result.visual": "已用視覺保版輸出，版面與原 PDF 對齊。",
-      "result.editable": "已輸出可編輯文字（複雜設計稿可能仍有位移）。",
-      "result.hybrid": "混合管線完成：已依品質評分選出最佳輸出。",
+      "result.visual":
+        "注意：目前是整頁圖片，Word 裡無法直接改文字。若要改字請改選「可編輯保版」再轉一次。",
+      "result.editable":
+        "已用精確定位輸出：版面接近原 PDF，文字可在 Word 中點選修改。",
+      "result.hybrid": "已優先輸出可編輯保版（精確定位），可在 Word 中改字。",
       "result.download": "下載檔案",
       "quality.title": "轉換品質 Conversion Quality",
       "quality.overall": "Overall",
@@ -47,29 +49,30 @@
       "error.convert": "轉換失敗",
       "error.retry": "轉換失敗，請稍後再試",
       "how.title": "轉換管線：偵測 → 混合 → 評分",
-      "how.lede": "每個 PDF→Word 都會走完整三步驟，自動選出較佳結果。",
+      "how.lede": "預設「可編輯保版」：背景保留版面 + 文字框可改字。",
       "how.s1.title": "1. Layout Detection",
       "how.s1.body":
         "判斷掃描／設計稿／多欄／簡單文字，並給出建議模式與信心分數。",
       "how.s2.title": "2. Hybrid Conversion",
-      "how.s2.body": "同時評估視覺保版與可編輯重建；版面分數過低會自動重試視覺保版。",
+      "how.s2.body":
+        "可編輯保版用精確定位文字框；只有掃描件才退回整頁圖片。",
       "how.s3.title": "3. Quality Score",
       "how.s3.body":
         "可解釋指標：Layout / Text / Image / Alignment / Page structure，並輸出 Overall。",
       "formats.title": "支援路徑",
       "formats.loading": "正在讀取引擎狀態…",
-      "formats.loReady": "LibreOffice 已就緒。PDF→Word 走偵測→混合→評分管線。",
+      "formats.loReady": "LibreOffice 已就緒。PDF→Word 預設可編輯保版（精確定位）。",
       "formats.coreReady":
-        "PDF→Word 已啟用 Layout Detection → Hybrid → Quality Score。",
+        "可編輯保版＝背景圖 + 文字框疊加，可改字且版面接近原檔。",
       "formats.unavailable": "無法讀取引擎狀態，仍可嘗試上傳轉換。",
       "env.banner": "目前環境：{label}",
-      "hint.mode.visual": "視覺保版",
-      "hint.mode.editable": "可編輯文字",
-      "hint.mode.hybrid": "混合轉換",
+      "hint.mode.visual": "視覺保版（整頁圖片）",
+      "hint.mode.editable": "可編輯保版（精確定位）",
+      "hint.mode.hybrid": "混合（優先精確定位）",
       "hint.scanned": "掃描影像 PDF（無文字層，需 OCR 才能可編輯）",
-      "hint.complex": "設計稿／多欄絕對定位（如 Canva），文字重建會跑版",
-      "hint.designed": "設計稿工具匯出（如 Canva），建議視覺／混合保版",
-      "hint.simple": "文字流動版面，可嘗試可編輯或混合轉換",
+      "hint.complex": "多欄／複雜版面：建議可編輯保版（精確定位）",
+      "hint.designed": "設計稿（如 Canva）：建議可編輯保版（精確定位）",
+      "hint.simple": "文字流動版面，適合可編輯保版",
       "hint.template": "偵測：{reason}（信心 {confidence}）→ 建議「{mode}」",
       footer: "Doc2Any · 本機轉換，檔案不會送到第三方雲端",
     },
@@ -81,7 +84,7 @@
       "nav.formats": "Formats",
       "hero.title": "Upload any format, convert to yours—without wrecking the layout.",
       "hero.lede":
-        "Runs Layout Detection → Hybrid Conversion → Quality Score to pick the safer output.",
+        "Default is positioned editable fidelity: near-original layout with text you can edit in Word.",
       "dropzone.aria": "Upload a file",
       "dropzone.title": "Drop a file here",
       "dropzone.sub": "or click to browse · max 50MB",
@@ -90,10 +93,10 @@
       "controls.layout": "Layout mode",
       "controls.convert": "Convert",
       "controls.uploadFirst": "Upload a file first",
-      "layout.auto": "Auto hybrid (recommended)",
-      "layout.hybrid": "Hybrid conversion",
-      "layout.visual": "Visual fidelity",
-      "layout.editable": "Editable text",
+      "layout.auto": "Auto (prefer positioned editable)",
+      "layout.hybrid": "Hybrid (prefer positioned editable)",
+      "layout.visual": "Visual (full-page image · not editable)",
+      "layout.editable": "Editable fidelity (positioned · recommended)",
       "status.default": "Analyzing layout…",
       "status.v1": "Layout Detection…",
       "status.v2": "Hybrid Conversion comparing candidates…",
@@ -104,10 +107,11 @@
       "status.e3": "Aligning images…",
       "status.e4": "Exporting editable Word…",
       "result.default": "Done. Layout preserved as much as possible.",
-      "result.visual": "Exported with visual fidelity—aligned to the original PDF.",
+      "result.visual":
+        "Note: this file is full-page images—you cannot edit text in Word. Choose “Editable fidelity” and convert again.",
       "result.editable":
-        "Editable text exported (complex designs may still shift).",
-      "result.hybrid": "Hybrid pipeline finished—best scored output selected.",
+        "Positioned editable export—layout stays close; click text in Word to edit.",
+      "result.hybrid": "Positioned editable preferred—you can edit text in Word.",
       "result.download": "Download",
       "quality.title": "Conversion Quality",
       "quality.overall": "Overall",
@@ -121,33 +125,35 @@
       "error.convert": "Conversion failed",
       "error.retry": "Conversion failed. Please try again.",
       "how.title": "Pipeline: Detect → Hybrid → Score",
-      "how.lede": "Every PDF→Word run follows three steps and picks the better result.",
+      "how.lede":
+        "Default is positioned editable fidelity (backdrop + editable text boxes).",
       "how.s1.title": "1. Layout Detection",
       "how.s1.body":
         "Classifies scanned / designed / multi-column / simple text with a confidence score.",
       "how.s2.title": "2. Hybrid Conversion",
       "how.s2.body":
-        "Compares visual fidelity vs editable rebuild; auto-retries visual if layout score collapses.",
+        "Uses positioned text boxes for editable fidelity; page images only for scans.",
       "how.s3.title": "3. Quality Score",
       "how.s3.body":
         "Explainable metrics: Layout / Text / Image / Alignment / Page structure → Overall.",
       "formats.title": "Supported routes",
       "formats.loading": "Loading engine status…",
       "formats.loReady":
-        "LibreOffice is ready. PDF→Word uses detect → hybrid → score.",
+        "LibreOffice is ready. PDF→Word defaults to positioned editable fidelity.",
       "formats.coreReady":
-        "PDF→Word pipeline: Layout Detection → Hybrid Conversion → Quality Score.",
+        "Editable fidelity = backdrop + text boxes (near-original layout, editable in Word).",
       "formats.unavailable":
         "Could not load engine status. You can still try converting.",
       "env.banner": "Environment: {label}",
-      "hint.mode.visual": "Visual",
-      "hint.mode.editable": "Editable text",
-      "hint.mode.hybrid": "Hybrid",
+      "hint.mode.visual": "Visual (page images)",
+      "hint.mode.editable": "Editable fidelity (positioned)",
+      "hint.mode.hybrid": "Hybrid (prefer positioned)",
       "hint.scanned": "Scanned image PDF (no text layer—OCR needed for editable text)",
       "hint.complex":
-        "Designed / multi-column absolute layout (e.g. Canva)—text rebuild will break",
-      "hint.designed": "Design-tool export (e.g. Canva)—prefer visual / hybrid",
-      "hint.simple": "Flowing text layout—editable or hybrid may work",
+        "Multi-column / complex layout—use positioned editable fidelity",
+      "hint.designed":
+        "Design export (e.g. Canva)—use positioned editable fidelity",
+      "hint.simple": "Flowing text layout—good for positioned editable Word",
       "hint.template": "Detected: {reason} (confidence {confidence}) → recommend “{mode}”",
       footer: "Doc2Any · Local conversion—files never leave your machine",
     },
@@ -406,6 +412,14 @@
       if (!res.ok) return;
       lastAnalyze = await res.json();
       renderAnalyzeHint();
+      // Prefer editable so Word text can be modified
+      if (lastAnalyze.recommended_mode === "editable" || lastAnalyze.recommended_mode === "hybrid") {
+        layoutMode.value = "editable";
+      } else if (lastAnalyze.recommended_mode === "visual" && lastAnalyze.is_scanned) {
+        layoutMode.value = "visual";
+      } else {
+        layoutMode.value = "editable";
+      }
     } catch (_) {
       /* optional hint */
     }
@@ -574,7 +588,8 @@
       resultName.textContent = outName;
       if (resultNote) {
         const used = (res.headers.get("X-Doc2Any-Mode-Used") || "").toLowerCase();
-        if (used === "editable") resultNote.textContent = t("result.editable");
+        if (used === "editable" || used === "positioned")
+          resultNote.textContent = t("result.editable");
         else if (used === "visual") resultNote.textContent = t("result.visual");
         else resultNote.textContent = t("result.hybrid");
       }
