@@ -41,14 +41,16 @@ RUN pip install -r /app/requirements-dev.txt
 COPY backend/tests /app/tests
 COPY backend/pytest.ini /app/pytest.ini
 COPY backend/.coveragerc /app/.coveragerc
+COPY scripts/docker-test-entry.sh /app/scripts/docker-test-entry.sh
 
 ENV DOC2ANY_ENV=development \
     DOC2ANY_DATA_DIR=/tmp/doc2any-data \
     DOC2ANY_CLEANUP_ENABLED=false
 
-RUN mkdir -p /tmp/doc2any-data
+RUN mkdir -p /tmp/doc2any-data /app/coverage \
+ && chmod +x /app/scripts/docker-test-entry.sh
 
-CMD ["python", "-m", "pytest"]
+CMD ["sh", "/app/scripts/docker-test-entry.sh"]
 
 # Default production image. Keep this stage last.
 FROM base AS runtime

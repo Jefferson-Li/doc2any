@@ -38,6 +38,10 @@ services:
       DOC2ANY_ENV: development
       DOC2ANY_DATA_DIR: /tmp/doc2any-data
       DOC2ANY_CLEANUP_ENABLED: "false"
+      HOST_UID: ${HOST_UID:-1000}
+      HOST_GID: ${HOST_GID:-1000}
+    volumes:
+      - ./coverage:/app/coverage
 
 volumes:
   doc2any_data:
