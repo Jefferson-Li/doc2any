@@ -1,5 +1,7 @@
 # Doc2Any
 
+[![CI](https://github.com/Jefferson-Li/doc2any/actions/workflows/ci.yml/badge.svg)](https://github.com/Jefferson-Li/doc2any/actions/workflows/ci.yml)
+
 **Layout-Aware Document Transformation Engine**  
 版面感知的文件轉換引擎
 
@@ -135,6 +137,8 @@ docker compose run --rm --build test
 ```
 
 The production image is the Dockerfile's default `runtime` stage and does not include the test dependencies. Coverage is measured with pytest-cov (`--cov=app --cov-branch --cov-fail-under=100`).
+
+GitHub Actions runs that same `make test` command on every pull request and on pushes to `main`.
 
 ## Configuration
 
