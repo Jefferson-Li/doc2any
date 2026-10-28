@@ -10,8 +10,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System libs for OpenCV / PyMuPDF wheels
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# System libs for OpenCV / PyMuPDF wheels.
+# The slim base image lists deb.debian.org over plain HTTP. Rewrite those
+# URIs to HTTPS before apt-get so the build does not need cleartext mirrors.
+RUN set -eux; \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources; \
+    fi; \
+    if [ -f /etc/apt/sources.list ]; then \
+      sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list; \
+    fi; \
+    apt-get update && apt-get install -y --no-install-recommends \
       curl \
       libgl1 \
       libglib2.0-0 \
