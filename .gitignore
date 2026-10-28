@@ -8,6 +8,7 @@ venv/
 .coverage
 .coverage.*
 htmlcov/
+coverage/
 coverage.xml
 
 # Runtime data

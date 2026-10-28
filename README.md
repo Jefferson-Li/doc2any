@@ -130,15 +130,24 @@ docker compose -f docker-compose.yml -f docker-compose.production.yml \
 make test
 ```
 
-Builds the Docker `test` image, runs the full unit suite, prints the branch-aware coverage report, and exits non-zero if line or branch coverage is below 100%. Equivalent:
+Builds the Docker `test` image, runs the full unit suite, prints the branch-aware coverage report, writes an HTML report to `coverage/index.html`, and exits non-zero if line or branch coverage is below 100%. The report directory is owned by the user who ran the command (`HOST_UID` / `HOST_GID`).
 
 ```bash
-docker compose run --rm --build test
+make coverage-open
 ```
 
-The production image is the Dockerfile's default `runtime` stage and does not include the test dependencies. Coverage is measured with pytest-cov (`--cov=app --cov-branch --cov-fail-under=100`).
+Opens that report (`open` on macOS, `xdg-open` otherwise).
 
-GitHub Actions runs that same `make test` command on every pull request and on pushes to `main`.
+Equivalent:
+
+```bash
+mkdir -p coverage
+HOST_UID="$(id -u)" HOST_GID="$(id -g)" docker compose --profile test run --rm --build test
+```
+
+The production image is the Dockerfile's default `runtime` stage and does not include the test dependencies. Coverage is measured with pytest-cov (`--cov=app --cov-branch --cov-report=term-missing --cov-report=html:coverage --cov-fail-under=100`).
+
+GitHub Actions runs that same `make test` command on every pull request and on pushes to `main`, and uploads `coverage/` as an artifact.
 
 ## Configuration
 
