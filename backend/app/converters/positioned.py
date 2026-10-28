@@ -66,7 +66,8 @@ def _sample_fill_color(img: Image.Image, box: tuple[int, int, int, int]) -> tupl
     for y in range(y0, y1, step):
         for x in (x0, max(x0, x1 - 1)):
             samples.append(img.getpixel((x, y)))  # type: ignore[arg-type]
-    if not samples:
+    # A positive clipped rect always yields at least one sample.
+    if not samples:  # pragma: no cover
         return (255, 255, 255)
     # Median-ish via average of samples (robust enough for solid Canva fills)
     r = sum(s[0] for s in samples) // len(samples)

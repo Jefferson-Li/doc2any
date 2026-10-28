@@ -25,5 +25,19 @@ services:
       - doc2any_data:/data
     restart: unless-stopped
 
+  # Unit tests + coverage gate. Not started by `docker compose up`.
+  # `docker compose run --rm --build test` selects this service explicitly.
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    image: doc2any:test
+    environment:
+      DOC2ANY_ENV: development
+      DOC2ANY_DATA_DIR: /tmp/doc2any-data
+      DOC2ANY_CLEANUP_ENABLED: "false"
+
 volumes:
   doc2any_data:

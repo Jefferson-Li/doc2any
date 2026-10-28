@@ -122,6 +122,20 @@ docker compose -f docker-compose.yml -f docker-compose.production.yml \
 
 ---
 
+## Tests
+
+```bash
+make test
+```
+
+Builds the Docker `test` image, runs the full unit suite, prints the branch-aware coverage report, and exits non-zero if line or branch coverage is below 100%. Equivalent:
+
+```bash
+docker compose run --rm --build test
+```
+
+The production image is the Dockerfile's default `runtime` stage and does not include the test dependencies. Coverage is measured with pytest-cov (`--cov=app --cov-branch --cov-fail-under=100`).
+
 ## Configuration
 
 Prefix: `DOC2ANY_`. See `.env.example`, `.env.staging.example`, `.env.production.example`.
@@ -167,6 +181,8 @@ backend/app/
     quality.py            # Explainable Quality Score
     engine.py             # Format converters
   static/                 # UI + i18n
+backend/tests/            # Unit tests (pytest + coverage gate)
+Makefile                  # `make test` → Docker
 ```
 
 ---
