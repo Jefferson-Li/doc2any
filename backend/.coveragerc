@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = app
+relative_files = True
+
+[report]
+fail_under = 100
+show_missing = True
+skip_empty = False

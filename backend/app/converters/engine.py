@@ -385,9 +385,10 @@ def convert_file(
         if src_ext == "doc" or target_ext in ("pdf", "odt", "rtf", "doc"):
             if libreoffice_available():
                 return convert_with_libreoffice(src, target_ext, work_dir)
-            if src_ext == "docx" and target_ext == "html":
+            # docx→html/txt never reach here; those targets are handled below.
+            if src_ext == "docx" and target_ext == "html":  # pragma: no cover
                 return docx_to_html(src, dst)
-            if src_ext == "docx" and target_ext == "txt":
+            if src_ext == "docx" and target_ext == "txt":  # pragma: no cover
                 return docx_to_txt(src, dst)
             raise RuntimeError(
                 f".{src_ext}→.{target_ext} 需要安裝 LibreOffice 才能保版轉換。"
@@ -396,7 +397,8 @@ def convert_file(
             return docx_to_html(src, dst)
         if target_ext == "txt":
             return docx_to_txt(src, dst)
-        if target_ext == "pdf":
+        # pdf/odt/rtf/doc already returned or raised above.
+        if target_ext == "pdf":  # pragma: no cover
             if libreoffice_available():
                 return convert_with_libreoffice(src, "pdf", work_dir)
             raise RuntimeError("DOCX→PDF 需要安裝 LibreOffice。")

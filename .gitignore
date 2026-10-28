@@ -5,6 +5,10 @@ __pycache__/
 venv/
 *.egg-info/
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 
 # Runtime data
 backend/uploads/
